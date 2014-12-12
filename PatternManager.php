@@ -5,15 +5,17 @@ use yii\base\Component;
 
 class PatternManager extends Component
 {
-    public $startTag = '{';
+    public $startTag = '%';
 
-    public $endTag = '}';
+    public $endTag = '%';
 
     public $patterns = [];
 
     public $patternNamespace;
 
     public $patternPath;
+
+    private $_patterns;
 
     public function init()
     {
@@ -23,7 +25,12 @@ class PatternManager extends Component
         foreach ($files as $file)
         {
             $class = $this->patternNamespace.basename($file, '.php');
-            $this->patterns[$this->startTag.$class::getPattern().$this->endTag] = $class::getTitle();
+            if ((new $class) instanceof PatternInterface)
+            {
+                $tag = $this->startTag . $class::getPattern() . $this->endTag;
+                $this->patterns[$tag] = $class::getTitle();
+                $this->_patterns[$tag] = $class;
+            }
         }
     }
 
@@ -32,8 +39,15 @@ class PatternManager extends Component
         return $this->patterns;
     }
 
-    public function parce()
+    public function fillData(&$objects, $data)
     {
-
+        /** @var \mrssoft\template\PatternInterface $class */
+        foreach ($this->_patterns as $tag => $class)
+        {
+            if (strpos($objects, $tag) !== false)
+            {
+                $objects = str_replace($tag, $class::execute($data), $objects);
+            }
+        }
     }
 }

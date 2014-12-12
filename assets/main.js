@@ -1,12 +1,25 @@
+function showNoty(options) {
+    noty({
+        text: options.text,
+        theme: 'defaultTheme',
+        layout: 'bottomLeft',
+        type: options.type ? options.type : 'information',
+        dismissQueue: false,
+        timeout: options.timeout ? options.timeout : 1500,
+        force: true,
+        killer: true
+    });
+}
+
 $(document).ready(function () {
 
-    const unit = 37.795;
     const selectBorderStyle = '1px dotted red';
 
     var $paper = $('#paper');
     var $selected = null;
     var $selectedBorder = null;
 
+    var functions = new Functions();
 
     var objectProps = [
         'left', 'top', 'width', 'height', 'background', 'border'
@@ -57,21 +70,6 @@ $(document).ready(function () {
         });
     };
 
-    var toNumber = function (value) {
-        if (typeof value === 'string') {
-            value = parseFloat(value.replace(',', '.'));
-        }
-        return value;
-    };
-
-    var toUnit = function (value) {
-        return (toNumber(value) / unit).toFixed(2);
-    };
-
-    var fromUnit = function (value) {
-        return parseFloat(toNumber(value)) * unit;
-    };
-
     var selectObject = function($obj) {
         if ($selected) {
             $selected.css('border', $selectedBorder);
@@ -80,18 +78,10 @@ $(document).ready(function () {
         $selectedBorder = $obj.css('border');
         $obj.css('border', selectBorderStyle);
         updateProps($obj);
-        $buttonDelete.removeAttr('disabled');
-        $buttonCopy.removeAttr('disabled');
-        $uiProps.removeAttr('disabled');
     };
 
     var unselectAll = function () {
-        $buttonDelete.attr('disabled', 'disabled');
-        $buttonCopy.attr('disabled', 'disabled');
-        $uiProps.val('').attr('disabled', 'disabled');
-        $textArea.val('').attr('disabled', 'disabled');
-        $listFont.attr('disabled', 'disabled');
-        $textFontSize.attr('disabled', 'disabled');
+        $('.only-select').attr('disabled', 'disabled');
 
         if ($selected) {
             $selected.css('border', $selectedBorder);
@@ -100,21 +90,35 @@ $(document).ready(function () {
     };
 
     var updateProps = function ($obj) {
+
+        $('.only-select').removeAttr('disabled');
+
         $uiProps.each(function () {
             var prop = $(this).attr('data-te-prop');
             var value = $obj.css(prop);
-            if ($(this).attr('data-unit') == 1) value = toUnit(value);
+            if ($(this).attr('data-unit') == 1) value = functions.toUnit(value);
             if ($(this).attr('data-color') == 1) value = rgb2hex(value);
             $(this).val(value);
         });
 
         var objText = $obj.find('.t');
 
-        var text = objText.text().replace('<br>', "\n");
-        $textArea.val(text).removeAttr('disabled');
-        $listFont.val(objText.css('font-family')).removeAttr('disabled');
-        $textFontSize.val(objText.css('font-size')).removeAttr('disabled');
-        //$btnBold.
+        var text = objText.html();
+        $textArea.val(text.replace(/<br>/g, "\n"));
+        $listFont.val(objText.css('font-family'));
+        $textFontSize.val(objText.css('font-size'));
+
+        if (objText.css('font-weight') == 'bold') $btnBold.addClass('active'); else $btnBold.removeClass('active');
+        if (objText.css('font-style') == 'italic') $btnItalic.addClass('active'); else $btnItalic.removeClass('active');
+
+        $alignButtons.removeClass('active');
+        $('.align[data-te-prop="' + objText.css('text-align') + '"]').addClass('active');
+
+        $valign.each(function () {
+            $(this).parent().removeClass('active');
+        });
+        $('.valign[data-te-prop="' + objText.css('vertical-align') + '"]').parent().addClass('active');
+
     };
 
     $paper.on('click', '.object', function (e) {
@@ -134,6 +138,8 @@ $(document).ready(function () {
      */
 
     var $buttonSave = $('#te-btn-save'),
+        $buttonPrint = $('#te-btn-print'),
+        $buttonClose = $('#te-btn-close'),
         $buttonCopy = $('#te-btn-copy'),
         $buttonCreate = $('#te-btn-create'),
         $buttonDelete = $('#te-btn-delete'),
@@ -144,15 +150,31 @@ $(document).ready(function () {
         $textFontSize = $('#te-font-size'),
         $btnBold = $('#te-btn-bold'),
         $btnItalic = $('#te-btn-italic'),
-
+        $btnValign = $('#te-btn-valign'),
         $uiProps = $('[data-te-prop]');
 
 
+    /**
+     * Сохранить
+     */
     $buttonSave.click(function () {
         unselectAll();
         var serializer = new Serialize();
         var objects = serializer.save($paper.find('.object'));
         templateEditorSaveData(objects);
+    });
+
+    $buttonPrint.click(function () {
+        unselectAll();
+        window.print();
+    });
+
+    /**
+     * Закрыть редактор
+     */
+    $buttonClose.click(function () {
+        //TODO Проверка на изменения в документе
+        location.href = $(this).data('url');
     });
 
     /**
@@ -176,8 +198,8 @@ $(document).ready(function () {
                 $obj.css(objectProps[i], $sel.css(objectProps[i]));
             }
             $obj.find('.t').html($sel.find('.t').html());
-            $obj.css('left', $sel.offset().left + 10 + 'px');
-            $obj.css('top', $sel.offset().top + 10 + 'px');
+            $obj.css('left', $sel.position().left + 10 + 'px');
+            $obj.css('top', $sel.position().top + 10 + 'px');
             initObject($obj);
             selectObject($obj);
         }
@@ -201,7 +223,7 @@ $(document).ready(function () {
         if ($selected) {
             var prop = $(this).attr('data-te-prop');
             var value = $(this).val();
-            if ($(this).attr('data-unit')) value = fromUnit(value);
+            if ($(this).attr('data-unit')) value = functions.fromUnit(value);
             $selected.css(prop, value);
             updateObject($selected);
         }
@@ -236,6 +258,42 @@ $(document).ready(function () {
                 $(this).val(value);
                 $selected.find('.t').css('font-size', value);
             }
+        }
+    });
+
+    function toggleFontParam(e) {
+        if ($selected) {
+            var value;
+            if ($(this).hasClass('active')) {
+                value = 'normal';
+                $(this).removeClass('active');
+            } else {
+                value =  e.data.newValue;
+                $(this).addClass('active');
+            }
+            $selected.find('.t').css(e.data.param, value);
+        }
+    }
+    $btnBold.click({param: 'font-weight', newValue: 'bold'}, toggleFontParam);
+    $btnItalic.click({param: 'font-style', newValue: 'italic'}, toggleFontParam);
+
+    var $alignButtons = $('.align');
+    $alignButtons.click(function () {
+        if ($selected) {
+            $selected.find('.t').css('text-align', $(this).data('te-prop'));
+            $alignButtons.removeClass('active');
+            $(this).addClass('active');
+        }
+    });
+
+    var $valign = $('.valign');
+    $valign.click(function () {
+        if ($selected) {
+            $selected.find('.t').css('vertical-align', $(this).data('te-prop'));
+            $valign.each(function () {
+                $(this).parent().removeClass('active');
+            });
+            $(this).parent().addClass('active');
         }
     });
 
@@ -282,12 +340,17 @@ $(document).ready(function () {
      * Размеры рабочей области
      */
     var $left = $('.left');
-    function setupLeft() {
-        var h = $(window).height() - ($('.footer').outerHeight() + $left.offset().top);
-        $left.height(h);
+    if ($left.length) {
+        function setupLeft() {
+            var h = $(window).height() - $left.offset().top;
+            $left.height(h);
+        }
+
+        $(window).resize(setupLeft);
+        setupLeft();
     }
-    $(window).resize(setupLeft);
-    setupLeft();
+
+    $paper.parent().disableSelection();
 
     unselectAll();
 

@@ -15,10 +15,13 @@ class Asset extends AssetBundle
     ];
     public $js = [
         //'history.js',
+        'noty/packaged/jquery.noty.packaged.min.js',
+        'functions.js',
         'serialize.js',
         'main.js',
     ];
     public $depends = [
-        'yii\jui\JuiAsset'
+        'yii\jui\JuiAsset',
+        'yii\bootstrap\BootstrapPluginAsset',
     ];
 }

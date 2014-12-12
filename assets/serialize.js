@@ -19,10 +19,15 @@ function Serialize () {
         'border-width',
         'border-color',
         'background-color',
+    ];
+
+    this.propertiesText = [
         'font-size',
         'font-weight',
         'font-style',
-        'font-family'
+        'font-family',
+        'text-align',
+        'vertical-align'
     ];
 
     var that = this;
@@ -32,18 +37,28 @@ function Serialize () {
      * @returns string
      */
     this.save = function (elements) {
-        var l = that.properties.length,
+        var lenghtObject = that.properties.length,
+            lenghtText = that.propertiesText.length,
             objects = [],
-            css;
+            cssObject,
+            cssText,
+            $text,
+            i;
 
         elements.each(function () {
-            css = {};
-            for (var i = 0; i < l; i++) {
-                css[that.properties[i]] = $(this).css(that.properties[i]);
+            cssObject = {};
+            for (i = 0; i < lenghtObject; i++) {
+                cssObject[that.properties[i]] = $(this).css(that.properties[i]);
+            }
+            $text = $(this).find('.t');
+            cssText = {};
+            for (i = 0; i < lenghtText; i++) {
+                cssText[that.propertiesText[i]] = $text.css(that.propertiesText[i]);
             }
             objects.push({
-                css: css,
-                html: $(this).find('.t').html()
+                cssObject: cssObject,
+                cssText: cssText,
+                html: $text.html()
             });
         });
 
@@ -67,8 +82,8 @@ function Serialize () {
 
             for (var i = 0, l = objects.length; i < l; i++) {
                 $div = that.create();
-                $div.css(objects[i]['css']);
-                $div.find('.t').html(objects[i]['html']);
+                $div.css(objects[i]['cssObject']);
+                $div.find('.t').css(objects[i]['cssText']).html(objects[i]['html']);
                 that.init($div);
             }
             return true;

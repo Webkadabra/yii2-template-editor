@@ -2,6 +2,7 @@
 namespace mrssoft\template;
 
 use yii\base\Widget;
+use yii\helpers\Html;
 
 /**
  * Виджет редактора шаблонов
@@ -44,27 +45,37 @@ class Editor extends Widget
     public $saveUrl;
 
     /**
+     * @var string Адрес закрытия редактора
+     */
+    public $returnUrl;
+
+    /**
      * @var array Доп. параметры передваемые при сохранении
      */
     public $params = [];
 
     /**
+     * @var null/mixed Данные для заполнения шаблона
+     */
+    public $data = null;
+
+    /**
      * @var array Шрифты
      */
     public $fontList = [
-        'Arial, Arial, Helvetica, sans-serif' => 'Arial',
-        'Arial Black, Arial Black, Gadget, sans-serif' => 'Arial Black',
-        'Comic Sans MS, cursive' => 'Comic Sans MS',
-        'Courier New, Courier New, Courier6, monospace' => 'Courier New',
-        'Georgia, Georgia, serif' => 'Georgia',
-        'Impact, Charcoal, sans-serif' => 'Impact',
-        'Lucida Console, Monaco, monospace' => 'Lucida Console',
-        'Lucida Sans Unicode, Lucida Grande, sans-serif' => 'Lucida Sans',
-        'Palatino Linotype, Book Antiqua, Palatino, serif' => 'Palatino Linotype',
-        'Tahoma, Geneva, sans-serif' => 'Tahoma',
-        'Times New Roman, Times, serif' => 'Times New Roman',
-        'Trebuchet MS, Helvetica, sans-serif' => 'Trebuchet',
-        'Verdana, Verdana, Geneva, sans-serif' => 'Verdana',
+        "Arial" => "Arial",
+        "'Arial Black'" => "Arial Black",
+        "'Comic Sans MS'" => "Comic Sans MS",
+        "'Courier New'" => "Courier New",
+        "Georgia" => "Georgia",
+        "Impact" => "Impact",
+        "'Lucida Console'" => "Lucida Console",
+        "'Lucida Sans Unicode'" => "Lucida Sans",
+        "'Palatino Linotype'" => "Palatino Linotype",
+        "Tahoma" => "Tahoma",
+        "'Times New Roman'" => "Times New Roman",
+        "'Trebuchet MS'" => "Trebuchet",
+        "Verdana" => "Verdana",
     ];
 
     public function run()
@@ -76,9 +87,22 @@ class Editor extends Widget
             'patternPath' => $this->patternPath
         ]);
 
+        if (!empty($this->data))
+        {
+            $patternManager->fillData($this->objects, $this->data);
+            $view = 'print';
+        }
+        else
+        {
+            $view = 'editor';
+        }
 
-        echo $this->render('editor', [
+        $paper = Html::tag('div', '', ['id' => 'paper', 'style' => 'width:'.$this->width.'cm;height:'.$this->height.'cm']);
+        $paper .= Html::tag('div', $this->objects, ['id' => 'te-objects', 'style' => 'display:none']);
+
+        echo $this->render($view, [
             'patterns' => $patternManager->getList(),
+            'paper' => $paper
         ]);
     }
 }
