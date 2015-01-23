@@ -14,14 +14,18 @@ class Asset extends AssetBundle
         'style.css',
     ];
     public $js = [
-        //'history.js',
         'noty/packaged/jquery.noty.packaged.min.js',
+        'object.js',
+        'markers.js',
+        'group.js',
         'functions.js',
+        'editor.js',
+        'history.js',
         'serialize.js',
         'main.js',
     ];
     public $depends = [
-        'yii\jui\JuiAsset',
+        'yii\web\YiiAsset',
         'yii\bootstrap\BootstrapPluginAsset',
     ];
 }

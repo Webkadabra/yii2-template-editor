@@ -48,6 +48,7 @@
     background: #fff;
     box-shadow: 2px 2px 2px #000;
     position: relative;
+    display: block;
 }
 
 #te-text {
@@ -96,11 +97,10 @@
     opacity: 1;
     width: 100px;
     height: 100px;
-    border: 1px solid #000;
+    border: 1px solid rgba(0, 0, 0, 0);
     box-sizing: padding-box;
 }
 .object .t {
-    margin: 5px;
     text-align: center;
     display: table-cell;
     vertical-align: middle;
@@ -127,6 +127,16 @@
 }
 @page :right {
     margin: 0;
+}
+
+@media print and (color) {
+    * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+@media print and (monochrome) {
+
 }
 
 @media print {
@@ -161,9 +171,16 @@
 
     #paper {
         margin: 0;
+        padding: 0;
         background: #fff;
         box-shadow: none;
         position: static;
         overflow: hidden;
     }
+}
+
+#zoom {
+    width: 60%;
+    display: inline-block;
+    vertical-align: top;
 }

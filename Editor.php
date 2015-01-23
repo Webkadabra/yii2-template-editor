@@ -20,44 +20,23 @@ class Editor extends Widget
     public $patternPath;
 
     /**
-     * @var string Сериализованная строка объектов
+     * @var
      */
-    public $objects;
-
-    /**
-     * @var float Ширина шаблона
-     */
-    public $width = 21;
-
-    /**
-     * @var float Высота шаблона
-     */
-    public $height = 29.7;
-
-    /**
-     * @var string Название шаблона
-     */
-    public $title = '';
-
-    /**
-     * @var string Адрес сохранения
-     */
-    public $saveUrl;
+    public $model;
 
     /**
      * @var string Адрес закрытия редактора
      */
     public $returnUrl;
 
+    public $instantPrint = false;
+
+    public $data = null;
+
     /**
      * @var array Доп. параметры передваемые при сохранении
      */
     public $params = [];
-
-    /**
-     * @var null/mixed Данные для заполнения шаблона
-     */
-    public $data = null;
 
     /**
      * @var array Шрифты
@@ -87,9 +66,8 @@ class Editor extends Widget
             'patternPath' => $this->patternPath
         ]);
 
-        if (!empty($this->data))
+        if ($this->instantPrint)
         {
-            $patternManager->fillData($this->objects, $this->data);
             $view = 'print';
         }
         else
@@ -97,12 +75,16 @@ class Editor extends Widget
             $view = 'editor';
         }
 
-        $paper = Html::tag('div', '', ['id' => 'paper', 'style' => 'width:'.$this->width.'cm;height:'.$this->height.'cm']);
-        $paper .= Html::tag('div', $this->objects, ['id' => 'te-objects', 'style' => 'display:none']);
+        $paper = Html::tag('canvas', '', [
+            'id' => 'paper',
+            'width' => $this->model->width * 37.795,
+            'height' => $this->model->height * 37.795
+            //'style' => 'width:'.$this->model->width.'cm;height:'.$this->model->height.'cm'
+        ]);
 
         echo $this->render($view, [
             'patterns' => $patternManager->getList(),
-            'paper' => $paper
+            'paper' => $paper,
         ]);
     }
 }

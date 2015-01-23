@@ -1,3 +1,9 @@
+/** {Editor} */
+var editor;
+
+/** {Boolean} */
+var keyModeCtrl, keyModeShift, isChange = false;
+
 function showNoty(options) {
     noty({
         text: options.text,
@@ -11,137 +17,40 @@ function showNoty(options) {
     });
 }
 
-$(document).ready(function () {
-
-    const selectBorderStyle = '1px dotted red';
-
-    var $paper = $('#paper');
-    var $selected = null;
-    var $selectedBorder = null;
-
-    var functions = new Functions();
-
-    var objectProps = [
-        'left', 'top', 'width', 'height', 'background', 'border'
-    ];
-
-    var initObject = function ($obj) {
-        $obj.draggable({
-            start: function( event, ui ) {
-                if ($selected != $(this)) {
-                    selectObject($(this));
-                }
-            },
-            drag: function( event, ui ) {
-                updateProps($(this));
-            }
-        }).resizable({
-            handles: 'all',
-            //helper: "ui-resizable-helper",
-            autoHide: true,
-            start: function( event, ui ) {
-                if ($selected != $(this)) {
-                    selectObject($(this));
-                }
-            },
-            resize: function( event, ui ) {
-                updateObject($(this));
-            },
-            stop: function( event, ui ) {
-                updateProps($(this));
-            }
-        });
-        $paper.append($obj);
-        updateObject($obj);
-    };
-
-    var updateObject = function ($obj) {
-        var $t = $obj.find('.t');
-        $t.css({
-            width: $obj.css('width'),
-            height: $obj.css('height')
-        });
-    };
-
-    var createObject = function() {
-        return $('<div class="object"><div class="t"></div></div>').css({
-            'top': 10,
-            'left': 10
-        });
-    };
-
-    var selectObject = function($obj) {
-        if ($selected) {
-            $selected.css('border', $selectedBorder);
+jQuery.fn.disabled = function (mode) {
+    $(this).each(function () {
+        if (mode) {
+            $(this).attr('disabled', 'disabled');
+        } else {
+            $(this).removeAttr('disabled');
         }
-        $selected = $obj;
-        $selectedBorder = $obj.css('border');
-        $obj.css('border', selectBorderStyle);
-        updateProps($obj);
-    };
-
-    var unselectAll = function () {
-        $('.only-select').attr('disabled', 'disabled');
-
-        if ($selected) {
-            $selected.css('border', $selectedBorder);
-        }
-        $selected = null;
-    };
-
-    var updateProps = function ($obj) {
-
-        $('.only-select').removeAttr('disabled');
-
-        $uiProps.each(function () {
-            var prop = $(this).attr('data-te-prop');
-            var value = $obj.css(prop);
-            if ($(this).attr('data-unit') == 1) value = functions.toUnit(value);
-            if ($(this).attr('data-color') == 1) value = rgb2hex(value);
-            $(this).val(value);
-        });
-
-        var objText = $obj.find('.t');
-
-        var text = objText.html();
-        $textArea.val(text.replace(/<br>/g, "\n"));
-        $listFont.val(objText.css('font-family'));
-        $textFontSize.val(objText.css('font-size'));
-
-        if (objText.css('font-weight') == 'bold') $btnBold.addClass('active'); else $btnBold.removeClass('active');
-        if (objText.css('font-style') == 'italic') $btnItalic.addClass('active'); else $btnItalic.removeClass('active');
-
-        $alignButtons.removeClass('active');
-        $('.align[data-te-prop="' + objText.css('text-align') + '"]').addClass('active');
-
-        $valign.each(function () {
-            $(this).parent().removeClass('active');
-        });
-        $('.valign[data-te-prop="' + objText.css('vertical-align') + '"]').parent().addClass('active');
-
-    };
-
-    $paper.on('click', '.object', function (e) {
-        e.stopPropagation();
-        e.preventDefault();
-        selectObject($(this));
     });
 
-    $paper.click(function () {
-        unselectAll();
-    });
+    return $(this);
+};
 
-    /**
-     * ==================================================================================
-     * ОБРАБОТКА ЭУ
-     * ==================================================================================
-     */
+function changeObjectColor() {
+    if (editor.selectedObject) {
+        var $obj = $(this);
+        var prop = $obj.data('te-prop');
+        if (typeof prop === 'undefined') {
+            prop = $obj.parent().next('input').data('te-prop');
+        }
+
+        editor.selectedObject[prop] = $obj.val();
+        editor.update();
+    }
+}
+
+$(function () {
 
     var $buttonSave = $('#te-btn-save'),
         $buttonPrint = $('#te-btn-print'),
-        $buttonClose = $('#te-btn-close'),
+        $buttonSaveConfig = $('#save-config'),
         $buttonCopy = $('#te-btn-copy'),
         $buttonCreate = $('#te-btn-create'),
+        $buttonUndo = $('#te-btn-undo'),
+        $buttonRedo = $('#te-btn-redo'),
         $buttonDelete = $('#te-btn-delete'),
         $textArea = $('#te-text'),
         $templatesList = $('#te-templates'),
@@ -151,145 +60,166 @@ $(document).ready(function () {
         $btnBold = $('#te-btn-bold'),
         $btnItalic = $('#te-btn-italic'),
         $btnValign = $('#te-btn-valign'),
+        $changeColor = $('.change-color'),
+        $zoom = $('#zoom'),
+        $zoom100 = $('#zoom100'),
+        $uiSizeProps = $('[data-te-size-prop]'),
         $uiProps = $('[data-te-prop]');
 
+        var $valign = $('.valign');
+
+    editor = new Editor();
+
+    /**
+     * Изменения на листе
+     * @param onlyPosition
+     */
+    editor.onObjectChange = function (onlyPosition) {
+        if (editor.selectedObject) {
+            $('.only-select').disabled(false);
+
+            $uiSizeProps.each(function () {
+                var value = editor.selectedObject[$(this).data('te-size-prop')];
+                $(this).val(editor.fn.toUnit(value).toFixed(2));
+            });
+
+            if (!onlyPosition) {
+                $uiProps.each(function () {
+                    $(this).val(editor.selectedObject[$(this).data('te-prop')]);
+                });
+
+                $textArea.val(editor.selectedObject.getText());
+
+                $valign.each(function () {
+                    $(this).parent().removeClass('active');
+                });
+            }
+        } else {
+            $('.only-select').disabled(true);
+        }
+    };
+
+    /**
+     * Изменеия в истории
+     */
+    editor.history.onChange = function () {
+        isChange = true;
+        $buttonSave.disabled(false);
+        $buttonUndo.disabled(!this.enableUndo);
+        $buttonRedo.disabled(!this.enableRedo);
+    };
+
+    /**
+     * Создание объекта
+     */
+    $buttonCreate.click(function () {
+        var obj = new EditorObject(editor);
+        obj.text = 'Текст';
+        obj.width = obj.height = 150;
+        obj.x = editor.canvas.width / 2 - obj.width / 2;
+        obj.y = editor.canvas.height / 2 - obj.height / 2;
+        obj.init();
+        editor.history.create([obj]);
+        editor.unselectAll();
+        editor.selectObject(obj);
+        editor.update();
+    });
+
+    /**
+     * Печать
+     */
+    $buttonPrint.click(function () {
+        printPaper(true);
+    });
+
+    /**
+     * Закрыть
+     */
+    $('#te-btn-close').click(function () {
+        if (!isChange || confirm('Вы собираетесь уйти со страницы. Изменения будут потеряны. Уйти?')) {
+            location.href = $(this).data('url');
+        }
+    });
 
     /**
      * Сохранить
      */
     $buttonSave.click(function () {
-        unselectAll();
         var serializer = new Serialize();
-        var objects = serializer.save($paper.find('.object'));
-        templateEditorSaveData(objects);
+        var data = {
+            id: templateData.id,
+            objects: serializer.save(editor.objects)
+        };
+        $.post(templateData.saveUrl, data, function (response) {
+            showNoty({
+                text: response.message,
+                type: response.result ? 'success' : 'error'
+            });
+            $buttonSave.disabled(true);
+            isChange = false;
+        });
     });
 
-    $buttonPrint.click(function () {
-        unselectAll();
-        window.print();
-    });
-
-    /**
-     * Закрыть редактор
-     */
-    $buttonClose.click(function () {
-        //TODO Проверка на изменения в документе
-        location.href = $(this).data('url');
-    });
-
-    /**
-     * Создать элемент
-     */
-    $buttonCreate.click(function () {
-        var $obj = createObject();
-        initObject($obj);
-        selectObject($obj);
-    });
-
-    /**
-     * Копия
-     */
-    $buttonCopy.click(function () {
-        if ($selected) {
-            var $obj = createObject();
-            var $sel = $selected;
-            unselectAll();
-            for (var i = 0; i < objectProps.length; i++) {
-                $obj.css(objectProps[i], $sel.css(objectProps[i]));
-            }
-            $obj.find('.t').html($sel.find('.t').html());
-            $obj.css('left', $sel.position().left + 10 + 'px');
-            $obj.css('top', $sel.position().top + 10 + 'px');
-            initObject($obj);
-            selectObject($obj);
-        }
-    });
-
-    /**
-     * Удалить элемент
-     */
-    $buttonDelete.click(function () {
-        if ($selected) {
-            $selected.remove();
-            $selected = null;
-            unselectAll();
-        }
-    });
+    $buttonUndo.click(editor.history.undo);
+    $buttonRedo.click(editor.history.redo);
+    $buttonDelete.click(editor.fn.remove);
+    $buttonCopy.click(editor.fn.clone);
 
     /**
      * Изменение свойства объекта
      */
     $uiProps.change(function () {
-        if ($selected) {
+        if (editor.selectedObject) {
             var prop = $(this).attr('data-te-prop');
             var value = $(this).val();
-            if ($(this).attr('data-unit')) value = functions.fromUnit(value);
-            $selected.css(prop, value);
-            updateObject($selected);
+            if ($(this).attr('data-unit')) value = editor.fn.fromUnit(value);
+            editor.history.change([editor.selectedObject], [prop]);
+            editor.selectedObject[prop] = value;
+            editor.selectedObject.update();
+            editor.markers.update(editor.selected);
+            editor.draw();
         }
     });
 
+    /**
+     * Ввод текста
+     */
+    var startTextChange = false, fixTextHistory = false;
     $textArea.bind('keyup change', function () {
-       if ($selected) {
-           var html = $(this).val().replace(/\n/g, '<br>');
-           $selected.find('.t').html(html);
-       }
+        if (editor.selectedObject) {
+            if (startTextChange && !fixTextHistory) {
+                editor.history.change([editor.selectedObject], ['text']);
+                fixTextHistory = true;
+            }
+            editor.selectedObject.setText($(this).val());
+            editor.draw();
+        }
+    }).focus(function () {
+        startTextChange = true;
+        fixTextHistory = false;
+    }).blur(function () {
+        startTextChange = false;
     });
 
+    /**
+     * Выбор текстового шаблона
+     */
     $templatesList.dblclick(function () {
-        if ($selected) {
+        if (editor.selectedObject) {
             $textArea.val($textArea.val() + $(this).val());
             $textArea.change();
         }
     });
 
-    $listFont.change(function () {
-        if ($selected) {
-            $selected.find('.t').css('font-family', $(this).val());
-        }
-    });
-
-    $textFontSize.change(function () {
-        if ($selected) {
-            var value = $(this).val();
-            value = parseFloat(value);
-            if (!isNaN(value)) {
-                value += 'px';
-                $(this).val(value);
-                $selected.find('.t').css('font-size', value);
-            }
-        }
-    });
-
-    function toggleFontParam(e) {
-        if ($selected) {
-            var value;
-            if ($(this).hasClass('active')) {
-                value = 'normal';
-                $(this).removeClass('active');
-            } else {
-                value =  e.data.newValue;
-                $(this).addClass('active');
-            }
-            $selected.find('.t').css(e.data.param, value);
-        }
-    }
-    $btnBold.click({param: 'font-weight', newValue: 'bold'}, toggleFontParam);
-    $btnItalic.click({param: 'font-style', newValue: 'italic'}, toggleFontParam);
-
-    var $alignButtons = $('.align');
-    $alignButtons.click(function () {
-        if ($selected) {
-            $selected.find('.t').css('text-align', $(this).data('te-prop'));
-            $alignButtons.removeClass('active');
-            $(this).addClass('active');
-        }
-    });
-
-    var $valign = $('.valign');
+    /**
+     * Вертикальное выравнивание
+     */
     $valign.click(function () {
-        if ($selected) {
-            $selected.find('.t').css('vertical-align', $(this).data('te-prop'));
+        if (editor.selectedObject) {
+            editor.selectedObject.textBaseline = $(this).data('te-prop');
+            editor.selectedObject.updateTextLines();
+            editor.update();
+
             $valign.each(function () {
                 $(this).parent().removeClass('active');
             });
@@ -297,42 +227,14 @@ $(document).ready(function () {
         }
     });
 
-    var keyModeCtrl, keyModeShift;
-    const KEY_SHIFT = 16;
-    const KEY_CTRL = 17;
-    const KEY_SPACE = 32;
-    const KEY_Z = 90;
-    const KEY_J = 74;
-    const KEY_ZPT = 188;
-    const KEY_DEL = 46;
-
-    function checkField(obj) {
-        return !(obj.activeElement && (obj.activeElement.nodeName == 'TEXTAREA' || obj.activeElement.nodeName == 'INPUT'));
-    }
-
-    $(document).keydown(function (e) {
-        switch (e.which) {
-            case KEY_CTRL: keyModeCtrl = true; break;
-            case KEY_SHIFT: keyModeShift = true; break;
-        }
-    }).keyup(function (e) {
-        //alert(e.which);
-        if (keyModeCtrl) {
-            if (keyModeShift) {
-                switch (e.which) {
-                    case KEY_Z: history.redo(); break;
-                }
-            } else {
-                switch (e.which) {
-                    case KEY_Z: history.undo(); break;
-                }
-            }
-        }
-
-        switch (e.which) {
-            case KEY_CTRL:  keyModeCtrl = false; break;
-            case KEY_SHIFT: keyModeShift = false; break;
-            case KEY_DEL: if (checkField(this)) $buttonDelete.click();
+    /**
+     * Выбор шрифта
+     */
+    $listFont.change(function () {
+        if (editor.selectedObject) {
+            editor.selectedObject.fontFamily = $(this).val();
+            editor.selectedObject.updateTextLines();
+            editor.update();
         }
     });
 
@@ -350,15 +252,99 @@ $(document).ready(function () {
         setupLeft();
     }
 
-    $paper.parent().disableSelection();
+    $('.only-select').disabled(true);
+    $buttonSave.disabled(true);
 
-    unselectAll();
+    /**
+     * ===== Обработка клавиатуры =====
+     */
+
+    const KEY_DEL = 46;
+
+    function checkField(obj) {
+        return !(obj.activeElement && (obj.activeElement.nodeName == 'TEXTAREA' || obj.activeElement.nodeName == 'INPUT'));
+    }
+
+    $(document).keydown(function (event) {
+        keyModeCtrl = event.ctrlKey;
+        keyModeShift = event.shiftKey;
+        if (event.ctrlKey) {
+            switch (String.fromCharCode(event.which).toLowerCase()) {
+                case 's':
+                    event.preventDefault();
+                    $buttonSave.click();
+                    break;
+                case 'p':
+                    event.preventDefault();
+                    $buttonPrint.click();
+                    break;
+                case 'z':
+                    if (event.shiftKey) {
+                        $buttonRedo.click();
+                    } else {
+                        $buttonUndo.click();
+                    }
+                    event.preventDefault();
+                    break;
+            }
+        }
+    }).keyup(function (event) {
+        keyModeCtrl = event.ctrlKey;
+        keyModeShift = event.shiftKey;
+        switch (event.which) {
+            case KEY_DEL:
+                if (checkField(this)) {
+                    $buttonDelete.click();
+                }
+                break;
+        }
+    });
+
+    /**
+     * Печать шаблона
+     */
+    function printPaper(createWin) {
+        var w = editor.canvas.width, h = editor.canvas.height;
+        var printScale = 2;
+        editor.canvas.width = w * printScale;
+        editor.canvas.height = h * printScale;
+        editor.context.scale(printScale, printScale);
+        editor.print();
+
+        if (createWin) {
+            var win = window.open();
+        } else {
+            win = window;
+        }
+        var css = "@page :first {margin: 0;} " +
+            "@page :left { margin: 0; } " +
+            "@page :right { margin: 0; } " +
+            "@media print and (color) { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }} " +
+            "body {margin:0}";
+
+        win.document.write('<head><style>' + css + '</style></head><body><img width="' + w + '" height="' + h + '" src="' + editor.canvas.toDataURL() + '"></body>');
+        win.print();
+        //win.location.reload();
+
+        editor.context.scale(1, 1);
+        editor.canvas.width = w;
+        editor.canvas.height = h;
+        editor.update();
+
+        keyModeCtrl = null;
+        keyModeShift  = null;
+    }
 
     /**
      * Загрузка
      */
-    var searize = new Serialize($paper);
-    searize.init = initObject;
-    searize.create = createObject;
-    searize.load($('#te-objects').text());
+    $.get(templateData.loadUrl, function (response) {
+        var searize = new Serialize();
+        searize.load(editor, response);
+        if ($('#fast-print').val() == '1') {
+            printPaper();
+        } else {
+            editor.update();
+        }
+    });
 });

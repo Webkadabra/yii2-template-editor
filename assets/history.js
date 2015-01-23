@@ -1,93 +1,165 @@
-/**
- * Undo system
- */
-function EditorHistory (obj) {
 
-    this.list = [];
-    this.current = -1;
+function EditorHistory (editor) {
 
-    this.deleteObject = null;
-    this.createObject =  null;
-    this.getAttributes = null;
+    var list = [],
+        current = 0,
+        that = this,
+        size = 100;
 
-    if (obj) {
-        if (obj.hasOwnProperty('deleteObject')) this.deleteObject = obj.deleteObject;
-        if (obj.hasOwnProperty('createObject')) this.createObject = obj.createObject;
-        if (obj.hasOwnProperty('getAttributes')) this.getAttributes = obj.getAttributes;
-    }
+    var OP_CHANGE = 0;
+    var OP_CREATE = 1;
+    var OP_REMOVE = 2;
 
-    /**
-     * Добавить событие в историю
-     * @param object
-     * @param eventType string|null
-     */
-    this.push = function (object, eventType) {
-        if (eventType === null) {
-            eventType = 'change';
+    this.enableUndo = false;
+    this.enableRedo = false;
+
+    this.onChange = null;
+
+    var push = function (operation, objects, changes) {
+
+        var props = [];
+        if (changes) {
+            for (var j = 0, k = objects.length; j < k; j++) {
+                for (var i = 0, l = changes.length; i < l; i++) {
+                    if (objects[j].hasOwnProperty(changes[i])) {
+                        props[changes[i]] = objects[j][changes[i]];
+                    }
+                }
+            }
         }
 
-        var attrs;
-            if (typeof this.getAttributes === 'function') {
-            attrs = this.getAttributes(object);
+        list[current] = {
+            operation: operation,
+            objects: objects,
+            props: props
+        };
+
+        if (list.length == size) {
+            size.splice(0, 1);
         } else {
-            attrs = [];
+            current++;
         }
 
-        this.list.push({
-            eventType: eventType,
-            object: object,
-            attrs: attrs
-        });
-
-        this.current++;
+        that.enableUndo = true;
+        if (that.onChange) that.onChange.call(that);
     };
 
     /**
-     * Отменить событие
+     * Зафиксировать изменения в объекте
+     * @param objects {Array} - массив объектов
+     * @param changes {Array} - массив названий фиксируемых свойств
+     */
+    this.change = function (objects, changes) {
+        push(OP_CHANGE, objects, changes);
+    };
+
+    /**
+     * Зафиксировать создание объекта
+     * @param objects {Array}
+     */
+    this.create = function (objects) {
+        push(OP_CREATE, objects);
+    };
+
+    /**
+     * Зафиксировать удаление объекта
+     * @param objects {Array}
+     */
+    this.remove = function (objects) {
+        push(OP_REMOVE, objects);
+    };
+
+    var applyChange = function () {
+        var i, tmp,
+            objects = list[current].objects,
+            lenght = objects.length,
+            props = list[current].props;
+
+        for (i = 0; i < lenght; i++) {
+            for (var attr in props) {
+                tmp = objects[i][attr];
+                objects[i][attr] = props[attr];
+                props[attr] = tmp;
+            }
+            objects[i].update();
+            editor.selectObject(objects[i]);
+        }
+    };
+
+    var applyCreate = function () {
+        var i, objects = list[current].objects, lenght = objects.length;
+        for (i = 0; i < lenght; i++) {
+            editor.objects.add(objects[i]);
+            editor.selectObject(objects[i]);
+        }
+    };
+
+    var applyRemove = function () {
+        var i, objects = list[current].objects, lenght = objects.length;
+        for (i = 0; i < lenght; i++) {
+            editor.objects.remove(objects[i]);
+        }
+    };
+
+    /**
+     * Отмена действия
      */
     this.undo = function() {
-        if (this.current > -1) {
-            var c = this.current--;
-            switch (this.list[c].eventType) {
-                case 'create':
-                    if (typeof this.deleteObject === 'function') {
-                        this.deleteObject(this.list[c]);
-                    }
-                    break;
-                case 'change':
-                    var attrs = this.list[c].attrs;
-                    var object = this.list[c].paper;
-                    for (var attr in attrs) {
-                        if (attrs.hasOwnProperty(attr)) {
-                            object.attr(attr, this.list[c].attrs[attr]);
-                        }
-                    }
+        if (current > 0) {
+            current--;
+            editor.unselectAll();
+
+            switch (list[current].operation) {
+                case OP_CHANGE:
+                    applyChange();
                     break;
 
-                case 'remove':
+                case OP_CREATE:
+                    applyRemove();
+                    break;
+
+                case OP_REMOVE:
+                    applyCreate();
                     break;
             }
+
+            editor.markers.update();
+            editor.update();
+
+            that.enableUndo = (current > 0);
+            that.enableRedo = true;
+            if (that.onChange) that.onChange.call(that);
         }
     };
 
     /**
-     * Повторить событие
+     * Повтор дейтсвия
      */
-    this.redo = function () {
-        if (this.current < this.list.length) {
-            this.current++;
-            switch (this.list[this.current].eventType) {
-                case 'create':
-                    if (typeof this.createObject === 'function') {
-                        this.createObject(this.list[this.current]);
-                    }
-                    break;
-                case 'change':
+    this.redo = function() {
+        if (current < list.length) {
+            editor.unselectAll();
+
+            switch (list[current].operation) {
+                case OP_CHANGE:
+                    applyChange();
                     break;
 
-                case 'remove':
+                case OP_CREATE:
+                    applyCreate();
+                    break;
+
+                case OP_REMOVE:
+                    applyRemove();
                     break;
             }
+
+            editor.markers.update();
+            editor.update();
+
+            current++;
+            that.enableUndo = true;
+            that.enableRedo = (current < list.length);
+            if (that.onChange) that.onChange.call(that);
         }
     };
 }

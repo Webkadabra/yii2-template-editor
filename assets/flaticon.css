@@ -24,36 +24,42 @@ font-style: normal;
 .flaticon-copy9:before {
 	content: "\e003";
 }
-.flaticon-curve9:before {
+.flaticon-cross106:before {
 	content: "\e004";
 }
-.flaticon-delete81:before {
+.flaticon-curve9:before {
 	content: "\e005";
 }
-.flaticon-floppy1:before {
+.flaticon-delete81:before {
 	content: "\e006";
 }
-.flaticon-italic3:before {
+.flaticon-floppy1:before {
 	content: "\e007";
 }
-.flaticon-layers2:before {
+.flaticon-italic3:before {
 	content: "\e008";
 }
-.flaticon-layers5:before {
+.flaticon-layers2:before {
 	content: "\e009";
 }
-.flaticon-left31:before {
+.flaticon-layers5:before {
 	content: "\e00a";
 }
-.flaticon-printer67:before {
+.flaticon-left31:before {
 	content: "\e00b";
 }
-.flaticon-redo3:before {
+.flaticon-printer67:before {
 	content: "\e00c";
 }
-.flaticon-right26:before {
+.flaticon-redo3:before {
 	content: "\e00d";
 }
-.flaticon-two262:before {
+.flaticon-right26:before {
 	content: "\e00e";
+}
+.flaticon-slots:before {
+	content: "\e00f";
+}
+.flaticon-two262:before {
+	content: "\e010";
 }

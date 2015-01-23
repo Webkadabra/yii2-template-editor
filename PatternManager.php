@@ -46,7 +46,9 @@ class PatternManager extends Component
         {
             if (strpos($objects, $tag) !== false)
             {
-                $objects = str_replace($tag, $class::execute($data), $objects);
+                $value = $class::execute($data);
+                //$value = Json::encode($value);
+                $objects = str_replace($tag, $value, $objects);
             }
         }
     }

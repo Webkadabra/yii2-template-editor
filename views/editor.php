@@ -6,8 +6,9 @@
  * @var string $paper;
  */
 
-use kartik\color\ColorInput;
+use yii\bootstrap\ActiveForm;
 use yii\helpers\Html;
+use yii\helpers\Url;
 
 $widget = $this->context;
 ?>
@@ -20,28 +21,29 @@ $widget = $this->context;
         <div class="right">
             <div class="group">
                 <button type="button" id="te-btn-save" class="btn btn-default"><i class="flaticon-floppy1"></i> Сохранить</button>
-                <button type="button" id="te-btn-print" class="btn btn-default">Печать</button>
-                <button type="button" id="te-btn-close" data-url="<?=$widget->returnUrl;?>" class="btn btn-default">Закрыть</button>
+                <button type="button" id="te-btn-print" class="btn btn-default" title="Печать шаблона..."><span class="flaticon-printer67"></span></button>
+                <button type="button" id="te-btn-close" data-url="<?=Url::toRoute(['template/index']);?>" title="Закрыть" class="btn btn-default pull-right"><span class="flaticon-cross106"></span></button>
+                <button type="button" id="te-btn-config" class="btn btn-default pull-right" data-toggle="modal" data-target="#modal-config" title="Параметры шаблона..."><span class="flaticon-slots"></span></button>
             </div>
             <div>
                 <button type="button" data-type="rect" id="te-btn-create" class="btn btn-primary"><i class="flaticon-add182"></i> Добавить</button>
                 <button type="button" id="te-btn-copy" class="btn btn-success only-select" title="Создать копию объекта"><span class="flaticon-copy9"></span></button>
-                <button type="button" id="te-btn-undo" class="btn btn-default" title="Отмена"><span class="flaticon-curve9"></span></button>
-                <button type="button" id="te-btn-redo" class="btn btn-default" title="Повтор"><span class="flaticon-redo3"></span></button>
+                <button type="button" id="te-btn-undo" class="btn btn-default" disabled title="Отмена"><span class="flaticon-curve9"></span></button>
+                <button type="button" id="te-btn-redo" class="btn btn-default" disabled title="Повтор"><span class="flaticon-redo3"></span></button>
                 <button type="button" id="te-btn-delete" class="btn btn-danger only-select" title="Удалить"><span class="flaticon-delete81"></span></button>
             </div>
             <table class="prop-grid">
                 <tr>
                     <td><label for="te-obj-left">x</label></td>
-                    <td><input type="text" id="te-obj-left" data-te-prop="left" class="only-select" data-unit="1"></td>
+                    <td><input type="text" class="only-select" data-te-size-prop="x"></td>
                     <td><label for="te-obj-top">y</label></td>
-                    <td><input type="text" id="te-obj-top" data-te-prop="top" class="only-select" data-unit="1"></td>
+                    <td><input type="text" class="only-select" data-te-size-prop="y"></td>
                 </tr>
                 <tr>
                     <td><label for="te-obj-width">ширина</label></td>
-                    <td><input type="text" id="te-obj-width" data-te-prop="width" class="only-select" data-unit="1"></td>
+                    <td><input type="text" class="only-select" data-te-size-prop="width"></td>
                     <td><label for="te-obj-height">высота</label></td>
-                    <td><input type="text" id="te-obj-height" data-te-prop="height" class="only-select" data-unit="1"></td>
+                    <td><input type="text" class="only-select" data-te-size-prop="height"></td>
                 </tr>
             </table>
             <hr>
@@ -67,11 +69,12 @@ $widget = $this->context;
             <div class="group">
                 <table class="prop-grid">
                     <tr>
-                        <td><?=Html::dropDownList('font', null, $widget->fontList, ['id' => 'te-font', 'class' => 'only-select']);?></td>
-                        <td><input type="text" id="te-font-size" class="only-select"></td>
+                        <td><?=Html::dropDownList('font', null, $widget->fontList, ['id' => 'te-font', 'data-te-prop' => 'fontFamily', 'class' => 'only-select']);?></td>
+                        <td><input type="text" id="te-font-size" data-te-prop="fontSize" class="only-select"></td>
                     </tr>
                 </table>
                 <textarea id="te-text" rows="4" class="only-select"></textarea>
+                <button id="add-img" class="btn btn-default btn-xs">Вставка изображения</button>
             </div>
             <div class="group">
                 <?=Html::listBox('templates', null, $patterns, ['id' => 'te-templates', 'class' => 'only-select']);?>
@@ -80,55 +83,63 @@ $widget = $this->context;
                 <table class="prop-grid">
                     <tr>
                         <td>Текст</td>
-                        <td>
-                            <? echo ColorInput::widget([
-                                'name' => 'color',
-                                'id' => 'color',
-                                'value' => '#000',
-                                'options' => ['data-te-prop' => 'color', 'class' => 'change-color only-select']
-                            ]); ?>
-                        </td>
-                    </tr>
-                    <tr>
+                        <td><input id="te-color-text" data-te-prop="textStyle" type="color" class="only-select" value="#000000"></td>
                         <td>Заливка</td>
-                        <td>
-                            <? echo ColorInput::widget([
-                                'name' => 'background-color',
-                                'id' => 'background-color',
-                                'value' => '#fff',
-                                'options' => ['data-te-prop' => 'background-color', 'class' => 'change-color only-select']
-                            ]); ?>
-                        </td>
+                        <td><input id="te-color-fill" data-te-prop="fillStyle" type="color" class="only-select" value="#ffffff"></td>
                     </tr>
                     <tr>
                         <td>Рамка</td>
+                        <td><input id="te-color-stroke" data-te-prop="strokeStyle" type="color" class="only-select" value="#000000"></td>
+                        <td>Толщина</td>
+                        <td><input id="te-border-width" data-te-prop="lineWidth" type="number" class="only-select" value="0"></td>
+                    </tr>
+                    <tr>
+                        <td>Масштаб <span id="zoom-value">100%</span></td>
                         <td>
-                            <? echo ColorInput::widget([
-                                'name' => 'border-color',
-                                'id' => 'border-color',
-                                'value' => '#000',
-                                'options' => ['data-te-prop' => 'border-color', 'class' => 'change-color only-select']
-                            ]); ?>
+                            <input type="range" min="0.5" max="2" step="0.01" value="1" id="zoom">
+                            <button id="zoom100" class="btn btn-default btn-xs">100%</button>
                         </td>
                     </tr>
                 </table>
-
             </div>
         </div>
     </div>
 </div>
 
-<?php if (!empty($widget->saveUrl)):?>
-    <script>
-        function templateEditorSaveData(objects) {
-            var post = {<?php foreach ($widget->params as $k => $v) {echo '"'.$k.'":"'.$v.'"';} ?>};
-            post.objects = objects;
-            $.post('<?=$widget->saveUrl;?>', post, function (response) {
-                showNoty({
-                    text: response.message,
-                    type: response.result ? 'success' : 'alert'
-                });
-            });
-        }
-    </script>
-<?php endif ?>
+<div class="modal" id="modal-config">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+                <h4 class="modal-title">Параметры шаблона</h4>
+            </div>
+            <div class="modal-body">
+                <? $form = ActiveForm::begin([
+                        'action' => Url::toRoute(['template/config']),
+                        'id' => 'form-config',
+                        'layout' => 'horizontal',
+                        'fieldConfig' => [
+                            'template' => '{label}<div class="col-xs-10">{input}</div><div class="col-xs-offset-2 col-xs-10">{error}</div>',
+                            'labelOptions' => ['class' => 'col-xs-2 control-label'],
+                        ]
+                    ]);
+                    echo Html::hiddenInput('template_id', $widget->model->id);
+                    echo $form->field($widget->model, 'title');
+                    echo $form->field($widget->model, 'width');
+                    echo $form->field($widget->model, 'height');
+                    ActiveForm::end(); ?>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="save-config">Сохранить изменения</button>
+                <button type="button" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    var templateData = {
+        id: <?=$widget->model->id;?>,
+        saveUrl: '<?=Url::toRoute(['template/save']);?>',
+        loadUrl: '<?=Url::toRoute(['template/load', 'templateID' => $widget->model->id]);?>'
+    };
+</script>
