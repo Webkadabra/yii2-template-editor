@@ -17,22 +17,22 @@ function EditorHistory (editor) {
 
     var push = function (operation, objects, changes) {
 
-        var props = [];
+        list[current] = {
+            operation: operation,
+            objects: objects
+        };
+
         if (changes) {
+            var props = [], l = changes.length;
             for (var j = 0, k = objects.length; j < k; j++) {
-                for (var i = 0, l = changes.length; i < l; i++) {
+                for (var i = 0; l, i < l; i++) {
                     if (objects[j].hasOwnProperty(changes[i])) {
                         props[changes[i]] = objects[j][changes[i]];
                     }
                 }
             }
+            list[current].props = props;
         }
-
-        list[current] = {
-            operation: operation,
-            objects: objects,
-            props: props
-        };
 
         if (list.length == size) {
             size.splice(0, 1);

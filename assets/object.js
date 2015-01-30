@@ -20,13 +20,13 @@ function EditorObject(editor) {
     this.fontItalic = false;
     this.text = null;
 
-    this.old = {x: 0, y: 0, width: 0, height: 0, rx: 0, rw: 0, ry: 0, rh: 0};
+    this.image = null;
+    this.old = {};
+    this.font = '';
+    this.lines = [];
+    this.textHeight = 0;
 
     editor.objects.add(this);
-
-    var font,
-        lines = [],
-        textHeight = 0;
 
     /**
      * Клонирование объекта
@@ -46,19 +46,15 @@ function EditorObject(editor) {
         return (point.x > this.x && point.y > this.y && point.x < this.x + this.width && point.y < this.y + this.height);
     };
 
-    /**
-     * @param markers Markers
-     */
-    this.updateOld = function (markers) {
+    this.updateOld = function () {
         this.old.x = this.x;
         this.old.y = this.y;
         this.old.width = this.width;
         this.old.height = this.height;
-
-        this.old.rx = markers.x / this.x;
-        this.old.rw = this.width / markers.width;
-        this.old.ry = markers.y / this.y;
-        this.old.rh = this.height / markers.height;
+        this.old.rx = editor.markers.x / this.x;
+        this.old.rw = this.width / editor.markers.width;
+        this.old.ry = editor.markers.y / this.y;
+        this.old.rh = this.height / editor.markers.height;
     };
 
     this.setText = function (value) {
@@ -70,14 +66,6 @@ function EditorObject(editor) {
         return this.text;
     };
 
-    /**
-     * Инициализация объекта
-     */
-    this.init = function () {
-        this.updateFont();
-        this.updateTextLines();
-    };
-
     this.update = function() {
         this.updateFont();
         this.updateTextLines();
@@ -87,23 +75,25 @@ function EditorObject(editor) {
      * Обновить шрифт
      */
     this.updateFont = function () {
-        font = this.fontSize + 'pt ' + this.fontFamily;
-        if (this.fontBold) font += ' bold';
-        if (this.fontItalic) font += ' italic';
+        this.font = '';
+        if (this.fontItalic) this.font += 'italic ';
+        if (this.fontBold) this.font += 'bold ';
+        this.lineHeight = this.fontSize * 1.4;
+        this.font += this.fontSize + 'pt ' + this.fontFamily;
     };
 
     /**
      * Подготовить текст для вывода
      */
     this.updateTextLines = function () {
-        lines = [];
+        this.lines = [];
         if (this.text && this.text != '') {
             var ln = this.text.split('\n'),
                 count = ln.length,
                 context = editor.context;
 
-            textHeight = this.lineHeight * count;
-            editor.context.font = font;
+            this.textHeight = this.lineHeight * count;
+            editor.context.font = this.font;
 
             for (var i = 0; i < count; i++) {
                 var line = '',
@@ -114,16 +104,16 @@ function EditorObject(editor) {
                         testWidth = context.measureText(testLine).width;
 
                     if (testWidth > this.width - 10) {
-                        lines.push(line);
-                        textHeight += this.lineHeight;
+                        this.lines.push(line);
+                        this.textHeight += this.lineHeight;
                         line = words[n] + ' ';
                     } else {
                         line = testLine + ' ';
                     }
                 }
-                lines.push(line);
+                this.lines.push(line);
             }
-            textHeight -= this.lineHeight;
+            this.textHeight -= this.lineHeight;
         }
     };
 
@@ -136,6 +126,11 @@ function EditorObject(editor) {
         if (this.fillStyle) {
             context.fillStyle = this.fillStyle;
             context.fillRect(this.x, this.y, this.width, this.height);
+        }
+
+        if (this.image) {
+            var h = this.image.naturalHeight * this.width / this.image.naturalWidth;
+            context.drawImage(this.image, 20, 20, this.image.naturalWidth - 40, this.image.naturalHeight - 40, this.x, this.y, this.width, h);
         }
 
         if (this.lineWidth > 0) {
@@ -151,17 +146,32 @@ function EditorObject(editor) {
         }
 
         var l;
-        if (l = lines.length) {
+        if (l = this.lines.length) {
             context.fillStyle = this.textStyle;
-            context.font = font;
+            context.font = this.font;
             context.textAlign = this.textAlign;
             context.textBaseline = this.textBaseline;
 
-            var top = this.y + this.height / 2 - textHeight / 2,
+            var top, left;
+
+            if (this.textAlign == 'left') {
+                left = this.x;
+            } else if (this.textAlign == 'right') {
+                left = this.x + this.width;
+            } else {
                 left = this.x + this.width / 2;
+            }
+
+            if (this.textBaseline == 'top') {
+                top = this.y;
+            } else if (this.textBaseline == 'bottom') {
+                top = this.y + this.height - this.textHeight;
+            } else {
+                top = this.y + this.height / 2 - this.textHeight / 2;
+            }
 
             for (var n = 0; n < l; n++) {
-                context.fillText(lines[n], left, top);
+                context.fillText(this.lines[n], left, top);
                 top += this.lineHeight;
             }
         }

@@ -24,8 +24,6 @@ function Serialize () {
         'fontItalic'
     ];
 
-    var that = this;
-
     /**
      * Сериализация объектов шаблона
      * @returns string
@@ -50,25 +48,51 @@ function Serialize () {
      * Загрузка объектов шаблона из строки
      * @param editor EditorTemplate
      * @param string
-     * @returns {boolean}
+     * @param callback
      */
-    this.load = function (editor, string) {
+    this.load = function (editor, string, callback) {
         if (string == '') return false;
         var data = JSON.parse(string);
         if (data && data.hasOwnProperty('version') && data.hasOwnProperty('objects') && data.version == version) {
             var objects = data.objects,
                 lenght = properties.length,
-                i, j, l;
+                i, j, l, imageCount = 0;
 
             for (i = 0, l = objects.length; i < l; i++) {
                 var obj = new EditorObject(editor);
                 for (j = 0; j < lenght; j++) {
                     obj[properties[j]] = objects[i][properties[j]];
                 }
-                obj.init();
             }
-            return true;
+
+            var result = function(e) {
+                if (e.type == 'error') {
+                    //this.src = null;
+                }
+                imageCount--;
+                if (imageCount == 0) {
+                    callback(true);
+                }
+            };
+
+            editor.objects.each(function () {
+                var obj = this,
+                    matches = /\[image:(.*)\]/.exec(obj.text);
+                if (matches) {
+                    imageCount++;
+                    obj.image = new Image();
+                    if (matches[1].indexOf('http') != -1) obj.image.crossOrigin = '';
+                    obj.image.onload = obj.image.onerror = result;
+                    obj.image.src = matches[1];
+                    obj.text = null;
+                } else {
+                    obj.update();
+                }
+            });
+
+            if (imageCount == 0) callback(true);
+        } else {
+            callback(false);
         }
-        return false;
     };
 }

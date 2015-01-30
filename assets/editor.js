@@ -22,10 +22,7 @@ function Editor() {
         markerResize = null,
         startResize = null,
         lockHistory = false,
-        tickInterval = 5,
-        //selectBorder = null, //TODO
         that = this;
-
 
     /**
      * Выделить объект
@@ -42,23 +39,14 @@ function Editor() {
     };
 
     /**
-     * Попытка закрыть редактор
-     * @returns {Boolean}
-     */
-    this.enableClose = function() {
-        if (that.history.enableUndo) {
-            return confirm('Вы собираетесь уйти со страницы. Изменения будут потеряны. Уйти?');
-        }
-        return true;
-    };
-
-    /**
      * Снять выделение со всех объектов
      */
     this.unselectAll = function () {
-        this.selected.clear();
-        this.markers.update();
-        that.selectedObject = null;
+        if (this.selected.count()) {
+            this.selected.clear();
+            this.markers.update();
+            that.selectedObject = null;
+        }
     };
 
     /**
@@ -120,8 +108,7 @@ function Editor() {
                 this.width = this.old.width + dx * this.old.rw;
                 if (this.width < minSize) this.width = minSize;
                 this.x = this.old.x + dx * (1 - this.old.rx);
-            }
-            if (markerResize == 0 || markerResize == 3 || markerResize == 5) {
+            } else if (markerResize == 0 || markerResize == 3 || markerResize == 5) {
                 this.width = this.old.width - dx * this.old.rx;
                 if (this.width < minSize) {
                     this.width = minSize;
@@ -133,8 +120,7 @@ function Editor() {
                 this.height = this.old.height + dy * this.old.rh;
                 if (this.height < minSize) this.height = minSize;
                 this.y = this.old.y + dy * (1 - this.old.ry);
-            }
-            if (markerResize == 0 || markerResize == 1 || markerResize == 2) {
+            } else if (markerResize == 0 || markerResize == 1 || markerResize == 2) {
                 this.height = this.old.height - dy * this.old.rh;
                 if (this.height < minSize) {
                     this.height = minSize;
@@ -144,9 +130,9 @@ function Editor() {
             }
 
             this.updateTextLines(that.context);
-            that.markers.update();
         });
 
+        that.markers.update();
         that.update();
     }
 
@@ -182,12 +168,12 @@ function Editor() {
 
     this.onMouseUp = function (e) {
 
-        var point = that.fn.windowToCanvas(e.clientX, e.clientY);
-
         if (startResize) {
             startResize = null;
             return;
         }
+
+        var point = that.fn.windowToCanvas(e.clientX, e.clientY);
 
         if (startDrag) {
             var dx = point.x - startDrag.x,
@@ -219,25 +205,25 @@ function Editor() {
         that.draw();
     };
 
-    this.onMouseDown = function (e) {
-        var point = that.fn.windowToCanvas(e.clientX, e.clientY);
-        that.markers.update();
+    function updateOld() {
+        that.selected.each(function () {
+            this.updateOld();
+        });
+    }
 
+    this.onMouseDown = function (e) {
         if (startDrag === null) {
+            var point = that.fn.windowToCanvas(e.clientX, e.clientY);
             var markerID = that.markers.testPoint(point);
             if (markerID !== null) {
-                that.selected.each(function () {
-                    this.updateOld(that.markers);
-                });
+                updateOld();
                 markerResize = markerID;
                 startResize = point;
                 lockHistory = false;
             } else {
                 that.selected.each(function () {
                     if (this.testPoint(point)) {
-                        that.selected.each(function () {
-                            this.updateOld(that.markers);
-                        });
+                        updateOld();
                         startDrag = point;
                         lockHistory = false;
                         return false;
@@ -272,11 +258,6 @@ function Editor() {
         this.draw();
         this.onObjectChange.call(this);
     };
-
-    function tick() {
-        that.draw(false);
-        setTimeout(tick, tickInterval);
-    }
 
     this.canvas.onmousedown = this.onMouseDown;
     this.canvas.onmouseup = this.onMouseUp;

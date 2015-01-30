@@ -3,8 +3,7 @@
  */
 function EditorGroup() {
 
-    var that = this,
-        items = [];
+    var items = [];
 
     /**
      * Добавить в группу
@@ -26,18 +25,6 @@ function EditorGroup() {
             }
         }
         return null;
-    };
-
-    /**
-     * Проверка наличия элемента в группе
-     * @param obj {EditorObject}
-     * @returns {boolean}
-     */
-    this.exists = function (obj) {
-        for (var i = 0, l = items.length; i < l; i++) {
-            if (obj == items[i]) return true;
-        }
-        return false;
     };
 
     /**

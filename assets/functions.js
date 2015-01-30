@@ -47,17 +47,19 @@ var EditorFunctions = function (editor) {
      */
     this.clone = function() {
         if (editor.selected.count()) {
-            var clones = new EditorGroup();
+            var clones = [];
             editor.selected.each(function () {
                 var obj = this.clone();
                 obj.x += 20;
                 obj.y += 20;
-                obj.init();
-                clones.add(obj);
+                obj.update();
+                clones.push(obj);
             });
-            editor.selected = clones;
-            editor.history.create(clones.items());
-            editor.markers.update();
+            editor.history.create(clones);
+            editor.unselectAll();
+            for (var i = 0, l = clones.length; i < l; i++) {
+                editor.selectObject(clones[i]);
+            }
             editor.update();
         }
     };
@@ -72,6 +74,30 @@ var EditorFunctions = function (editor) {
                 editor.objects.remove(this);
             });
             editor.unselectAll();
+            editor.update();
+        }
+    };
+
+    /**
+     * Выравнивание объектов
+     */
+    this.align = function () {
+        if (editor.selected.count()) {
+            var main = editor.selected.item(0),
+                mode = $(this).data('prop');
+
+            editor.history.change(editor.selected.items(), ['x', 'y']);
+            editor.selected.each(function () {
+                switch (mode) {
+                    case 'left': this.x = main.x; break;
+                    case 'center': this.x = main.x + main.width / 2 - this.width / 2; break;
+                    case 'right': this.x = main.x + main.width - this.width; break;
+                    case 'top': this.y = main.y; break;
+                    case 'middle': this.y = main.y + main.height / 2 - this.height / 2; break;
+                    case 'bottom': this.y = main.y + main.height - this.height; break;
+                }
+            });
+            editor.markers.update();
             editor.update();
         }
     };

@@ -18,48 +18,57 @@ font-style: normal;
 .flaticon-bold13:before {
 	content: "\e001";
 }
-.flaticon-center4:before {
+.flaticon-copy8:before {
 	content: "\e002";
 }
-.flaticon-copy9:before {
+.flaticon-cross106:before {
 	content: "\e003";
 }
-.flaticon-cross106:before {
+.flaticon-delete81:before {
 	content: "\e004";
 }
-.flaticon-curve9:before {
+.flaticon-floppy1:before {
 	content: "\e005";
 }
-.flaticon-delete81:before {
+.flaticon-italic3:before {
 	content: "\e006";
 }
-.flaticon-floppy1:before {
+.flaticon-left31:before {
 	content: "\e007";
 }
-.flaticon-italic3:before {
+.flaticon-object10:before {
 	content: "\e008";
 }
-.flaticon-layers2:before {
+.flaticon-object11:before {
 	content: "\e009";
 }
-.flaticon-layers5:before {
+.flaticon-object5:before {
 	content: "\e00a";
 }
-.flaticon-left31:before {
+.flaticon-object6:before {
 	content: "\e00b";
 }
-.flaticon-printer67:before {
+.flaticon-object7:before {
 	content: "\e00c";
 }
-.flaticon-redo3:before {
+.flaticon-object8:before {
 	content: "\e00d";
 }
-.flaticon-right26:before {
+.flaticon-paragraph12:before {
 	content: "\e00e";
 }
-.flaticon-slots:before {
+.flaticon-print26:before {
 	content: "\e00f";
 }
-.flaticon-two262:before {
+.flaticon-return13:before {
 	content: "\e010";
+}
+.flaticon-right26:before {
+	content: "\e011";
+}
+.flaticon-send:before {
+	content: "\e012";
+}
+.flaticon-settings61:before {
+	content: "\e013";
 }

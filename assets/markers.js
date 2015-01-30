@@ -8,13 +8,11 @@ function Markers(editor) {
     this.width = 0;
     this.height = 0;
 
-    this.size = 6;
-    this.fillStyle = '#337AB7';
-
-    this.visible = false;
-    this.markers = [];
-
-    var that = this;
+    var size = 6,
+        fillStyle = '#337AB7',
+        visible = false,
+        markers = [],
+        that = this;
 
     this.cursors = [
         'nw-resize',
@@ -32,9 +30,9 @@ function Markers(editor) {
      */
     this.update = function () {
         if (editor.selected.count() == 0) {
-            this.visible = false
+            visible = false
         } else {
-            this.visible = true;
+            visible = true;
 
             var x2 = 0, y2 = 0;
             that.x = Infinity;
@@ -50,14 +48,14 @@ function Markers(editor) {
             this.width = x2 - this.x;
             this.height = y2 - this.y;
 
-            this.markers[0] = {x: this.x - this.size, y: this.y - this.size};
-            this.markers[1] = {x: this.x + this.width / 2 - this.size / 2, y: this.y - this.size};
-            this.markers[2] = {x: this.x + this.width, y: this.y - this.size};
-            this.markers[3] = {x: this.x - this.size, y: this.y + this.height / 2 - this.size / 2};
-            this.markers[4] = {x: this.x + this.width, y: this.y + this.height / 2 - this.size / 2};
-            this.markers[5] = {x: this.x - this.size, y: this.y + this.height};
-            this.markers[6] = {x: this.x + this.width / 2 - this.size / 2, y: this.y + this.height};
-            this.markers[7] = {x: this.x + this.width, y: this.y + this.height};
+            markers[0] = {x: this.x - size, y: this.y - size};
+            markers[1] = {x: this.x + this.width / 2 - size / 2, y: this.y - size};
+            markers[2] = {x: this.x + this.width, y: this.y - size};
+            markers[3] = {x: this.x - size, y: this.y + this.height / 2 - size / 2};
+            markers[4] = {x: this.x + this.width, y: this.y + this.height / 2 - size / 2};
+            markers[5] = {x: this.x - size, y: this.y + this.height};
+            markers[6] = {x: this.x + this.width / 2 - size / 2, y: this.y + this.height};
+            markers[7] = {x: this.x + this.width, y: this.y + this.height};
         }
     };
 
@@ -66,9 +64,9 @@ function Markers(editor) {
      * @param point
      */
     this.testPoint = function (point) {
-        if (this.visible) {
+        if (visible) {
             for (var i = 0; i < 8; i++) {
-                if (point.x > this.markers[i].x && point.y > this.markers[i].y && point.x < this.markers[i].x + this.size && point.y < this.markers[i].y + this.size) {
+                if (point.x > markers[i].x && point.y > markers[i].y && point.x < markers[i].x + size && point.y < markers[i].y + size) {
                     return i;
                 }
             }
@@ -80,10 +78,10 @@ function Markers(editor) {
      * Отрисовка маркеров
      */
     this.draw = function () {
-        if (this.visible) {
-            editor.context.fillStyle = this.fillStyle;
+        if (visible) {
+            editor.context.fillStyle = fillStyle;
             for (var i = 0; i < 8; i++) {
-                editor.context.fillRect(this.markers[i].x, this.markers[i].y, this.size, this.size);
+                editor.context.fillRect(markers[i].x, markers[i].y, size, size);
             }
         }
     };

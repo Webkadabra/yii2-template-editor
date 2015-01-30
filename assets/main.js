@@ -56,11 +56,10 @@ $(function () {
         $templatesList = $('#te-templates'),
 
         $listFont = $('#te-font'),
-        $textFontSize = $('#te-font-size'),
         $btnBold = $('#te-btn-bold'),
         $btnItalic = $('#te-btn-italic'),
-        $btnValign = $('#te-btn-valign'),
-        $changeColor = $('.change-color'),
+        $alignButtons = $('.align'),
+        $btnMakeAlign = $('.m-align'),
         $zoom = $('#zoom'),
         $zoom100 = $('#zoom100'),
         $uiSizeProps = $('[data-te-size-prop]'),
@@ -90,12 +89,22 @@ $(function () {
 
                 $textArea.val(editor.selectedObject.getText());
 
+                $alignButtons.removeClass('active');
+                $('.align[data-te-prop="' + editor.selectedObject.textAlign + '"]').addClass('active');
+
                 $valign.each(function () {
                     $(this).parent().removeClass('active');
                 });
+                $('.valign[data-te-prop="' + editor.selectedObject.textBaseline + '"]').parent().addClass('active');
+
+                if (editor.selectedObject.fontBold) $btnBold.addClass('active'); else $btnBold.removeClass('active');
+                if (editor.selectedObject.fontItalic) $btnItalic.addClass('active'); else $btnItalic.removeClass('active');
             }
         } else {
-            $('.only-select').disabled(true);
+            $('.only-select, .only-select2').disabled(true);
+            if (editor.selected.count() > 1) {
+                $('.only-select2').disabled(false);
+            }
         }
     };
 
@@ -118,7 +127,7 @@ $(function () {
         obj.width = obj.height = 150;
         obj.x = editor.canvas.width / 2 - obj.width / 2;
         obj.y = editor.canvas.height / 2 - obj.height / 2;
-        obj.init();
+        obj.update();
         editor.history.create([obj]);
         editor.unselectAll();
         editor.selectObject(obj);
@@ -139,6 +148,27 @@ $(function () {
         if (!isChange || confirm('Вы собираетесь уйти со страницы. Изменения будут потеряны. Уйти?')) {
             location.href = $(this).data('url');
         }
+    });
+
+    /**
+     * Сохранить параметры шаблона
+     */
+    $buttonSaveConfig.click(function () {
+        var form = $('#form-config');
+        $('#modal-config').modal('hide');
+        $.post(form.attr('action'), form.serialize(), function (response) {
+            if (response.result) {
+                editor.canvas.width = editor.fn.fromUnit($('#template-width').val());
+                editor.canvas.height = editor.fn.fromUnit($('#template-height').val());
+                editor.update();
+            } else {
+                $('#modal-config').modal('show');
+            }
+            showNoty({
+                text: response.message,
+                type: response.result ? 'success' : 'error'
+            });
+        });
     });
 
     /**
@@ -175,6 +205,20 @@ $(function () {
             if ($(this).attr('data-unit')) value = editor.fn.fromUnit(value);
             editor.history.change([editor.selectedObject], [prop]);
             editor.selectedObject[prop] = value;
+            editor.selectedObject.update();
+            editor.markers.update(editor.selected);
+            editor.draw();
+        }
+    });
+
+    /**
+     * Изменение размеров и положения объекта
+     */
+    $uiSizeProps.change(function () {
+        if (editor.selectedObject) {
+            var prop = $(this).attr('data-te-size-prop');
+            editor.history.change([editor.selectedObject], [prop]);
+            editor.selectedObject[prop] = editor.fn.fromUnit( $(this).val());
             editor.selectedObject.update();
             editor.markers.update(editor.selected);
             editor.draw();
@@ -232,6 +276,7 @@ $(function () {
      */
     $listFont.change(function () {
         if (editor.selectedObject) {
+            editor.history.change([editor.selectedObject], ['fontFamily']);
             editor.selectedObject.fontFamily = $(this).val();
             editor.selectedObject.updateTextLines();
             editor.update();
@@ -239,9 +284,66 @@ $(function () {
     });
 
     /**
+     * Полужирный и курсив
+     */
+    function toggleFontParam(e) {
+        if (editor.selectedObject) {
+            var value;
+            if ($(this).hasClass('active')) {
+                value = false;
+                $(this).removeClass('active');
+            } else {
+                value = true;
+                $(this).addClass('active');
+            }
+            editor.history.change([editor.selectedObject], [e.data.param]);
+            editor.selectedObject[e.data.param] = value;
+            editor.selectedObject.updateFont();
+            editor.update();
+        }
+    }
+    $btnBold.click({param: 'fontBold'}, toggleFontParam);
+    $btnItalic.click({param: 'fontItalic'}, toggleFontParam);
+
+    /**
+     * Выравнивание по горизонтали
+     */
+    $alignButtons.click(function () {
+        if (editor.selectedObject) {
+            editor.history.change([editor.selectedObject], ['textAlign']);
+            editor.selectedObject.textAlign = $(this).data('te-prop');
+            editor.update();
+            $alignButtons.removeClass('active');
+            $(this).addClass('active');
+        }
+        return false;
+    });
+
+    /**
+     * Выравнивание по вертикали
+     */
+    $valign.click(function () {
+        if (editor.selectedObject) {
+            editor.history.change([editor.selectedObject], ['textBaseline']);
+            editor.selectedObject.textBaseline = $(this).data('te-prop');
+            editor.update();
+            $valign.each(function () {
+                $(this).parent().removeClass('active');
+            });
+            $(this).parent().addClass('active');
+        }
+        return false;
+    });
+
+    /**
+     * Выравнивание объектов
+     */
+    $btnMakeAlign.click(editor.fn.align);
+
+    /**
      * Размеры рабочей области
      */
-    var $left = $('.left');
+    var $left = $('.middle');
     if ($left.length) {
         function setupLeft() {
             var h = $(window).height() - $left.offset().top;
@@ -277,6 +379,10 @@ $(function () {
                 case 'p':
                     event.preventDefault();
                     $buttonPrint.click();
+                    break;
+                case 'd':
+                    event.preventDefault();
+                    $buttonCopy.click();
                     break;
                 case 'z':
                     if (event.shiftKey) {
@@ -340,11 +446,14 @@ $(function () {
      */
     $.get(templateData.loadUrl, function (response) {
         var searize = new Serialize();
-        searize.load(editor, response);
-        if ($('#fast-print').val() == '1') {
-            printPaper();
-        } else {
-            editor.update();
-        }
+        searize.load(editor, response, function(result) {
+            if (result) {
+                if ($('#fast-print').val() == '1') {
+                    printPaper();
+                } else {
+                    editor.update();
+                }
+            }
+        });
     });
 });
