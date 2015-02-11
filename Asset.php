@@ -15,15 +15,19 @@ class Asset extends AssetBundle
     ];
     public $js = [
         'noty/packaged/jquery.noty.packaged.min.js',
-        'object.js',
-        'markers.js',
-        'group.js',
-        'functions.js',
-        'editor.js',
-        'history.js',
-        'serialize.js',
-        'main.js',
+        'source/object.js',
+        'source/markers.js',
+        'source/group.js',
+        'source/functions.js',
+        'source/editor.js',
+        'source/history.js',
+        'source/serialize.js',
+        'source/main.js',
     ];
+    /*public $js = [
+        'noty/packaged/jquery.noty.packaged.min.js',
+        'editor.min.js',
+    ];*/
     public $depends = [
         'yii\web\YiiAsset',
         'yii\bootstrap\BootstrapPluginAsset',

@@ -1,4 +1,7 @@
-
+/**
+ * Операции отмены и повтора действий
+ * @param editor Editor
+ */
 function EditorHistory (editor) {
 
     var list = [],
@@ -25,7 +28,7 @@ function EditorHistory (editor) {
         if (changes) {
             var props = [], l = changes.length;
             for (var j = 0, k = objects.length; j < k; j++) {
-                for (var i = 0; l, i < l; i++) {
+                for (var i = 0; i < l; i++) {
                     if (objects[j].hasOwnProperty(changes[i])) {
                         props[changes[i]] = objects[j][changes[i]];
                     }

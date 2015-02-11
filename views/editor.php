@@ -145,6 +145,7 @@ $widget = $this->context;
         </div>
     </div>
 </div>
+<!--<div class="shadow"></div>-->
 <script>
     var templateData = {
         id: <?=$widget->model->id;?>,

@@ -1,7 +1,10 @@
-
+/**
+ * Вспомогателные функции редактора
+ * @param editor Editor
+ */
 var EditorFunctions = function (editor) {
 
-    const unit = 37.795;
+    var unit = 37.795;
 
     var toNumber = function (value) {
         if (typeof value === 'string') {

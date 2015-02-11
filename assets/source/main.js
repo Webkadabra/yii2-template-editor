@@ -5,17 +5,47 @@ var editor;
 var keyModeCtrl, keyModeShift, isChange = false;
 
 function showNoty(options) {
-    noty({
+    return noty({
         text: options.text,
         theme: 'defaultTheme',
-        layout: 'bottomLeft',
+        layout: options.layout ? options.layout : 'bottomLeft',
         type: options.type ? options.type : 'information',
         dismissQueue: false,
-        timeout: options.timeout ? options.timeout : 1500,
+        timeout: options.timeout ? options.timeout : 2000,
+        modal: options.modal ? options.modal : false,
+        closeWith: options.modal ? [] : ['click'],
         force: true,
         killer: true
     });
 }
+
+showNoty({
+    text: 'Загрузка...',
+    theme: 'defaultTheme',
+    layout: 'topCenter',
+    type: 'success',
+    timeout: false,
+    modal: true
+});
+
+jQuery.fn.disableSelection = function() {
+    this.each(function() {
+        this.onselectstart = function() { return false; };
+        this.unselectable = "on";
+        jQuery(this).css({
+            '-moz-user-select': 'none'
+            ,'-o-user-select': 'none'
+            ,'-khtml-user-select': 'none'
+            ,'-webkit-user-select': 'none'
+            ,'-ms-user-select': 'none'
+            ,'user-select': 'none'
+        });
+        // Для Opera
+        jQuery(this).bind('mousedown', function() {
+            return false;
+        });
+    });
+};
 
 jQuery.fn.disabled = function (mode) {
     $(this).each(function () {
@@ -60,8 +90,6 @@ $(function () {
         $btnItalic = $('#te-btn-italic'),
         $alignButtons = $('.align'),
         $btnMakeAlign = $('.m-align'),
-        $zoom = $('#zoom'),
-        $zoom100 = $('#zoom100'),
         $uiSizeProps = $('[data-te-size-prop]'),
         $uiProps = $('[data-te-prop]');
 
@@ -180,11 +208,15 @@ $(function () {
             id: templateData.id,
             objects: serializer.save(editor.objects)
         };
+        var notySave = showNoty({
+            text: 'Сохранение...',
+            theme: 'defaultTheme',
+            timeout: false,
+            modal: true
+        });
         $.post(templateData.saveUrl, data, function (response) {
-            showNoty({
-                text: response.message,
-                type: response.result ? 'success' : 'error'
-            });
+            notySave.setText(response.message);
+            notySave.setType(response.result ? 'success' : 'error');
             $buttonSave.disabled(true);
             isChange = false;
         });
@@ -320,7 +352,7 @@ $(function () {
     });
 
     /**
-     * Выравнивание по вертикали
+     * Выравнивание текста по вертикали
      */
     $valign.click(function () {
         if (editor.selectedObject) {
@@ -343,16 +375,25 @@ $(function () {
     /**
      * Размеры рабочей области
      */
-    var $left = $('.middle');
-    if ($left.length) {
+    var $middle = $('.middle');
+    if ($middle.length) {
         function setupLeft() {
-            var h = $(window).height() - $left.offset().top;
-            $left.height(h);
+            var h = $(window).height() - $middle.offset().top;
+            $middle.height(h);
         }
-
         $(window).resize(setupLeft);
         setupLeft();
     }
+
+    /**
+     * Запрет выделения в зоне рисования
+     */
+    $middle.disableSelection();
+
+    /**
+     * Снять выделение при щелчке по фону зоны рисования
+     */
+    $middle.click(editor.unselectAll);
 
     $('.only-select').disabled(true);
     $buttonSave.disabled(true);
@@ -360,8 +401,7 @@ $(function () {
     /**
      * ===== Обработка клавиатуры =====
      */
-
-    const KEY_DEL = 46;
+    var KEY_DEL = 46;
 
     function checkField(obj) {
         return !(obj.activeElement && (obj.activeElement.nodeName == 'TEXTAREA' || obj.activeElement.nodeName == 'INPUT'));
@@ -391,6 +431,12 @@ $(function () {
                         $buttonUndo.click();
                     }
                     event.preventDefault();
+                    break;
+                case 'b':
+                    $btnBold.click();
+                    break;
+                case 'i':
+                    $btnItalic.click();
                     break;
             }
         }
@@ -430,6 +476,7 @@ $(function () {
 
         win.document.write('<head><style>' + css + '</style></head><body><img width="' + w + '" height="' + h + '" src="' + editor.canvas.toDataURL() + '"></body>');
         win.print();
+        win.close();
         //win.location.reload();
 
         editor.context.scale(1, 1);
@@ -448,6 +495,7 @@ $(function () {
         var searize = new Serialize();
         searize.load(editor, response, function(result) {
             if (result) {
+                $.noty.closeAll();
                 if ($('#fast-print').val() == '1') {
                     printPaper();
                 } else {

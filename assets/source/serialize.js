@@ -5,6 +5,9 @@ function Serialize () {
 
     var version = '1.0.0';
 
+    /**
+     * Список сохраняемых параметров объекта
+     */
     var properties = [
         'x',
         'y',
@@ -66,9 +69,6 @@ function Serialize () {
             }
 
             var result = function(e) {
-                if (e.type == 'error') {
-                    //this.src = null;
-                }
                 imageCount--;
                 if (imageCount == 0) {
                     callback(true);

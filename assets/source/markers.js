@@ -1,5 +1,6 @@
 /**
  * Маркеры выделения
+ * @param editor Editor
  */
 function Markers(editor) {
 

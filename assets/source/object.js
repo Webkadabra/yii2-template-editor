@@ -1,5 +1,6 @@
 /**
  * Объект шаблона
+ * @param editor Editor
  */
 function EditorObject(editor) {
 

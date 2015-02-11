@@ -94,11 +94,12 @@ function Editor() {
         var dx = point.x - startResize.x,
             dy = point.y - startResize.y;
 
+        //TODO это не работатет
         if (keyModeShift && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
             if (Math.abs(dx) > Math.abs(dy)) {
-                dy = Math.abs(dx) * (dy / dy);
+                dy = Math.abs(dx) * (dy / dx);
             } else {
-                dx = Math.abs(dy) * (dx / dx);
+                dx = Math.abs(dy) * (dx / dy);
             }
         }
 
@@ -136,7 +137,42 @@ function Editor() {
         that.update();
     }
 
-    this.onMouseMove = function (e) {
+    function updateOld() {
+        that.selected.each(function () {
+            this.updateOld();
+        });
+    }
+
+    function render() {
+        that.context.clearRect(0, 0, that.canvas.width, that.canvas.height);
+        that.objects.each(function () {
+            this.draw(that.context);
+        });
+    }
+
+    this.print = function () {
+        this.printMode = true;
+        render();
+        this.printMode = false;
+    };
+
+    /**
+     * Перерисовка холста
+     */
+    this.draw = function () {
+        render();
+        that.markers.draw();
+    };
+
+    /**
+     * Обновление страницы
+     */
+    this.update = function () {
+        this.draw();
+        this.onObjectChange.call(this);
+    };
+
+    this.canvas.onmousemove = function (e) {
         var point = that.fn.windowToCanvas(e.clientX, e.clientY);
 
         if (startDrag) {
@@ -166,7 +202,7 @@ function Editor() {
         }
     };
 
-    this.onMouseUp = function (e) {
+    this.canvas.onmouseup = function (e) {
 
         if (startResize) {
             startResize = null;
@@ -205,13 +241,7 @@ function Editor() {
         that.draw();
     };
 
-    function updateOld() {
-        that.selected.each(function () {
-            this.updateOld();
-        });
-    }
-
-    this.onMouseDown = function (e) {
+    this.canvas.onmousedown = function (e) {
         if (startDrag === null) {
             var point = that.fn.windowToCanvas(e.clientX, e.clientY);
             var markerID = that.markers.testPoint(point);
@@ -232,34 +262,4 @@ function Editor() {
             }
         }
     };
-
-    function render() {
-        that.context.clearRect(0, 0, that.canvas.width, that.canvas.height);
-        that.objects.each(function () {
-            this.draw(that.context);
-        });
-    }
-
-    this.print = function () {
-        this.printMode = true;
-        render();
-        this.printMode = false;
-    };
-
-    /**
-     * Перерисовка холста
-     */
-    this.draw = function () {
-        render();
-        that.markers.draw();
-    };
-
-    this.update = function () {
-        this.draw();
-        this.onObjectChange.call(this);
-    };
-
-    this.canvas.onmousedown = this.onMouseDown;
-    this.canvas.onmouseup = this.onMouseUp;
-    this.canvas.onmousemove = this.onMouseMove;
 }
