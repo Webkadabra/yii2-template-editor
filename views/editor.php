@@ -6,6 +6,7 @@
  * @var string $paper;
  */
 
+use app\models\Template;
 use yii\bootstrap\ActiveForm;
 use yii\helpers\Html;
 use yii\helpers\Url;
@@ -136,6 +137,7 @@ $widget = $this->context;
                     echo $form->field($widget->model, 'title');
                     echo $form->field($widget->model, 'width');
                     echo $form->field($widget->model, 'height');
+                    echo $form->field($widget->model, 'type')->dropDownList(Template::getTypes());
                     ActiveForm::end(); ?>
             </div>
             <div class="modal-footer">

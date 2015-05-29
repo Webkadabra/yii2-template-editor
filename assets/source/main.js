@@ -11,7 +11,7 @@ function showNoty(options) {
         layout: options.layout ? options.layout : 'bottomLeft',
         type: options.type ? options.type : 'information',
         dismissQueue: false,
-        timeout: options.timeout ? options.timeout : 2000,
+        timeout: options.timeout ? options.timeout : 1400,
         modal: options.modal ? options.modal : false,
         closeWith: options.modal ? [] : ['click'],
         force: true,
@@ -24,8 +24,7 @@ showNoty({
     theme: 'defaultTheme',
     layout: 'topCenter',
     type: 'success',
-    timeout: false,
-    modal: true
+    timeout: false
 });
 
 jQuery.fn.disableSelection = function() {
@@ -84,7 +83,6 @@ $(function () {
         $buttonDelete = $('#te-btn-delete'),
         $textArea = $('#te-text'),
         $templatesList = $('#te-templates'),
-
         $listFont = $('#te-font'),
         $btnBold = $('#te-btn-bold'),
         $btnItalic = $('#te-btn-italic'),
@@ -211,8 +209,7 @@ $(function () {
         var notySave = showNoty({
             text: 'Сохранение...',
             theme: 'defaultTheme',
-            timeout: false,
-            modal: true
+            timeout: false
         });
         $.post(templateData.saveUrl, data, function (response) {
             notySave.setText(response.message);
@@ -474,7 +471,7 @@ $(function () {
             "@media print and (color) { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }} " +
             "body {margin:0}";
 
-        win.document.write('<head><style>' + css + '</style></head><body><img width="' + w + '" height="' + h + '" src="' + editor.canvas.toDataURL() + '"></body>');
+        win.document.write('<head><title>NovatorPrint</title><style>' + css + '</style></head><body><img width="' + w + '" height="' + h + '" src="' + editor.canvas.toDataURL() + '"></body>');
         win.print();
         win.close();
         //win.location.reload();
