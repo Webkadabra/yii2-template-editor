@@ -16,6 +16,7 @@ function EditorGroup() {
     /**
      * Удаление элемента
      * @param obj
+     * @returns {Number/null}
      */
     this.remove = function (obj) {
         for (var i = 0, l = items.length; i < l; i++) {

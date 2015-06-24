@@ -43,8 +43,14 @@ function EditorObject(editor) {
         return clone;
     };
 
+    /**
+     * Точка внутри объекта?
+     * @param point
+     * @returns {boolean}
+     */
     this.testPoint = function (point) {
-        return (point.x > this.x && point.y > this.y && point.x < this.x + this.width && point.y < this.y + this.height);
+        return (point.x > this.x && point.y > this.y &&
+            point.x < this.x + this.width && point.y < this.y + this.height);
     };
 
     this.updateOld = function () {
@@ -172,8 +178,11 @@ function EditorObject(editor) {
             }
 
             for (var n = 0; n < l; n++) {
-                context.fillText(this.lines[n], left, top);
+                if (top >= this.y) {
+                    context.fillText(this.lines[n], left, top);
+                }
                 top += this.lineHeight;
+                if (top > this.y + this.height) break;
             }
         }
     };

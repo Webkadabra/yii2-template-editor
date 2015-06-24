@@ -71,6 +71,9 @@ function changeObjectColor() {
     }
 }
 
+/**
+ * Загрузка
+ */
 $(function () {
 
     var $buttonSave = $('#te-btn-save'),
@@ -91,9 +94,9 @@ $(function () {
         $uiSizeProps = $('[data-te-size-prop]'),
         $uiProps = $('[data-te-prop]');
 
-        var $valign = $('.valign');
+    var $valign = $('.valign');
 
-    editor = new Editor();
+    editor = new Editor(0);
 
     /**
      * Изменения на листе
@@ -110,7 +113,11 @@ $(function () {
 
             if (!onlyPosition) {
                 $uiProps.each(function () {
-                    $(this).val(editor.selectedObject[$(this).data('te-prop')]);
+                    var prop = $(this).data('te-prop'),
+                        value = editor.selectedObject[prop];
+                    if (!(value == null && (prop == 'fillStyle'))) {
+                        $(this).val(value);
+                    }
                 });
 
                 $textArea.val(editor.selectedObject.getText());
@@ -164,7 +171,10 @@ $(function () {
      * Печать
      */
     $buttonPrint.click(function () {
-        printPaper(true);
+        var printer = new EditorPrinter([editor], true);
+        printer.print();
+        keyModeCtrl = null;
+        keyModeShift  = null;
     });
 
     /**
@@ -247,7 +257,7 @@ $(function () {
         if (editor.selectedObject) {
             var prop = $(this).attr('data-te-size-prop');
             editor.history.change([editor.selectedObject], [prop]);
-            editor.selectedObject[prop] = editor.fn.fromUnit( $(this).val());
+            editor.selectedObject[prop] = editor.fn.fromUnit($(this).val());
             editor.selectedObject.update();
             editor.markers.update(editor.selected);
             editor.draw();
@@ -331,6 +341,7 @@ $(function () {
             editor.update();
         }
     }
+
     $btnBold.click({param: 'fontBold'}, toggleFontParam);
     $btnItalic.click({param: 'fontItalic'}, toggleFontParam);
 
@@ -378,6 +389,7 @@ $(function () {
             var h = $(window).height() - $middle.offset().top;
             $middle.height(h);
         }
+
         $(window).resize(setupLeft);
         setupLeft();
     }
@@ -390,7 +402,9 @@ $(function () {
     /**
      * Снять выделение при щелчке по фону зоны рисования
      */
-    $middle.click(editor.unselectAll);
+    /*$middle.click(function () {
+        editor.unselectAll();
+    });*/
 
     $('.only-select').disabled(true);
     $buttonSave.disabled(true);
@@ -449,56 +463,85 @@ $(function () {
         }
     });
 
+
     /**
      * Печать шаблона
      */
-    function printPaper(createWin) {
-        var w = editor.canvas.width, h = editor.canvas.height;
-        var printScale = 2;
-        editor.canvas.width = w * printScale;
-        editor.canvas.height = h * printScale;
-        editor.context.scale(printScale, printScale);
-        editor.print();
+    function printPaper(editors, createWin) {
 
         if (createWin) {
             var win = window.open();
         } else {
             win = window;
         }
+
         var css = "@page :first {margin: 0;} " +
             "@page :left { margin: 0; } " +
             "@page :right { margin: 0; } " +
             "@media print and (color) { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }} " +
-            "body {margin:0}";
+            "body {margin:0; width:100%}";
 
-        win.document.write('<head><title>NovatorPrint</title><style>' + css + '</style></head><body><img width="' + w + '" height="' + h + '" src="' + editor.canvas.toDataURL() + '"></body>');
-        win.print();
-        win.close();
+        win.document.write('<head><title>NovatorPriceService</title><style>' + css + '</style></head><body>');
+
+        if (editors.length == 1) {
+            editors[0].print();
+            writeImage(win, editors[0], editors[0].canvas.width, editors[0].canvas.height);
+        } else {
+
+            var fn = new EditorFunctions(editors[0]);
+
+            var cols = parseInt(fn.fromUnit(21) / editors[0].canvas.width),
+                n = 0,
+                w = fn.toUnit(editors[0].canvas.width),
+                h = fn.toUnit(editors[0].canvas.height),
+                style = 'style="width:' + w + 'cm;height:' + h + 'cm"';
+
+            win.document.write('<table style="width:21cm"><tr>');
+
+            for (var i = 0; i < editors.length; i++) {
+                win.document.write('<td ' + style +'>');
+                renderEditor(win, editors[i]);
+                win.document.write('</td>');
+                n++;
+                if (n > cols) {
+                    n = 0;
+                    win.document.write('</td></tr><tr>');
+                }
+            }
+
+            win.document.write('</tr></table>');
+        }
+
+        win.document.write('</body>');
+
+        //win.print();
+        //win.close();
         //win.location.reload();
 
-        editor.context.scale(1, 1);
-        editor.canvas.width = w;
-        editor.canvas.height = h;
-        editor.update();
+        //e.context.scale(1, 1);
+        //e.canvas.width = w;
+        //e.canvas.height = h;
+        //e.update();
 
         keyModeCtrl = null;
         keyModeShift  = null;
     }
 
-    /**
-     * Загрузка
-     */
+    var fast = $('#fast-print').val() == '1';
+
     $.get(templateData.loadUrl, function (response) {
-        var searize = new Serialize();
-        searize.load(editor, response, function(result) {
-            if (result) {
+        var serialze = new Serialize();
+        serialze.load(response.items, editor, function (result) {
+            if (result.state) {
                 $.noty.closeAll();
-                if ($('#fast-print').val() == '1') {
-                    printPaper();
+                if (fast) {
+                    var printer = new EditorPrinter(result.editors, false);
+                    printer.print();
                 } else {
                     editor.update();
                 }
             }
         });
     });
+
 });

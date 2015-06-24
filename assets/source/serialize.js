@@ -49,50 +49,66 @@ function Serialize () {
 
     /**
      * Загрузка объектов шаблона из строки
-     * @param editor EditorTemplate
-     * @param string
+     * @param strings
+     * @param editor
      * @param callback
      */
-    this.load = function (editor, string, callback) {
-        if (string == '') return false;
-        var data = JSON.parse(string);
-        if (data && data.hasOwnProperty('version') && data.hasOwnProperty('objects') && data.version == version) {
-            var objects = data.objects,
-                lenght = properties.length,
-                i, j, l, imageCount = 0;
+    this.load = function (strings, editor, callback) {
+        if (strings == '') return false;
+        var imageCount = 0,
+            editors = [], e;
 
-            for (i = 0, l = objects.length; i < l; i++) {
-                var obj = new EditorObject(editor);
-                for (j = 0; j < lenght; j++) {
-                    obj[properties[j]] = objects[i][properties[j]];
-                }
+        for (var n = 0; n < strings.length; n++) {
+
+            var data = JSON.parse(strings[n]);
+
+            if (n == 0) {
+                e = editor;
+            } else {
+                e = new Editor(n);
             }
+            editors.push(e);
 
-            var result = function(e) {
-                imageCount--;
-                if (imageCount == 0) {
-                    callback(true);
+            if (data && data.hasOwnProperty('version') && data.hasOwnProperty('objects') && data.version == version) {
+                var objects = data.objects,
+                    lenght = properties.length,
+                    i, j, l;
+
+                for (i = 0, l = objects.length; i < l; i++) {
+                    var obj = new EditorObject(e);
+                    for (j = 0; j < lenght; j++) {
+                        obj[properties[j]] = objects[i][properties[j]];
+                    }
                 }
-            };
 
-            editor.objects.each(function () {
-                var obj = this,
-                    matches = /\[image:(.*)\]/.exec(obj.text);
-                if (matches) {
-                    imageCount++;
-                    obj.image = new Image();
-                    if (matches[1].indexOf('http') != -1) obj.image.crossOrigin = '';
-                    obj.image.onload = obj.image.onerror = result;
-                    obj.image.src = matches[1];
-                    obj.text = null;
-                } else {
-                    obj.update();
-                }
-            });
+                var result = function () {
+                    imageCount--;
+                    if (imageCount == 0) {
+                        callback({state: true, editors: editors});
+                    }
+                };
 
-            if (imageCount == 0) callback(true);
-        } else {
-            callback(false);
+                e.objects.each(function () {
+                    var obj = this,
+                        matches = /\[image:(.*)\]/.exec(obj.text);
+                    if (matches) {
+                        imageCount++;
+                        obj.image = new Image();
+                        if (matches[1].indexOf('http') != -1) obj.image.crossOrigin = '';
+                        obj.image.onload = obj.image.onerror = result;
+                        obj.image.src = matches[1];
+                        obj.text = null;
+                    } else {
+                        obj.update();
+                    }
+                });
+            } else {
+                callback(false);
+            }
+        }
+
+        if (imageCount == 0) {
+            callback({state: true, editors: editors});
         }
     };
 }

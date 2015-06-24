@@ -63,6 +63,7 @@ function Markers(editor) {
     /**
      * Возвращает ID маркера если указанная точка находится в его пределах. Иначе null
      * @param point
+     * @returns {Number/null}
      */
     this.testPoint = function (point) {
         if (visible) {

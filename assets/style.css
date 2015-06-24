@@ -46,7 +46,7 @@
     margin-bottom: 10px;
 }
 
-#template-editor-wrapper #paper {
+#template-editor-wrapper .paper {
     margin: 5px auto;
     background: #fff;
     box-shadow: 2px 2px 2px #000;
@@ -69,7 +69,7 @@
     height: 220px !important;
 }
 
-#paper {
+.paper {
     overflow: hidden;
 }
 
@@ -149,7 +149,7 @@
         width: 0;
     }
 
-    #paper {
+    .paper {
         margin: 0;
         padding: 0;
         background: #fff;

@@ -57,6 +57,10 @@ class Editor extends Widget
         "Verdana" => "Verdana",
     ];
 
+    public $count = 1;
+
+    const SCALE = 37.795;
+
     public function run()
     {
         Asset::register($this->view);
@@ -66,25 +70,26 @@ class Editor extends Widget
             'patternPath' => $this->patternPath
         ]);
 
-        if ($this->instantPrint)
-        {
-            $view = 'print';
-        }
-        else
-        {
-            $view = 'editor';
-        }
+        $view = $this->instantPrint ? 'print' : 'editor';
 
-        $paper = Html::tag('canvas', '', [
-            'id' => 'paper',
-            'width' => $this->model->width * 37.795,
-            'height' => $this->model->height * 37.795
-            //'style' => 'width:'.$this->model->width.'cm;height:'.$this->model->height.'cm'
-        ]);
+        $paper = '';
+        for ($i = 0; $i < $this->count; $i++) {
+            $paper .= $this->createPaper($i);
+        }
 
         echo $this->render($view, [
             'patterns' => $patternManager->getList(),
             'paper' => $paper,
+        ]);
+    }
+
+    private function createPaper($index)
+    {
+        return Html::tag('canvas', '', [
+            'id' => 'paper'.$index,
+            'class' => 'paper',
+            'width' => $this->model->width * self::SCALE,
+            'height' => $this->model->height * self::SCALE
         ]);
     }
 }

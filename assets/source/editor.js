@@ -1,7 +1,7 @@
 /**
  * Объект редактора
  */
-function Editor() {
+function Editor(index) {
 
     this.objects = new EditorGroup();
     this.selected = new EditorGroup();
@@ -10,7 +10,7 @@ function Editor() {
     this.history = new EditorHistory(this);
     this.fn = new EditorFunctions(this);
 
-    this.canvas = document.getElementById('paper');
+    this.canvas = document.getElementById('paper' + index);
     this.context = this.canvas.getContext('2d');
 
     this.showFrame = true;
@@ -94,7 +94,7 @@ function Editor() {
         var dx = point.x - startResize.x,
             dy = point.y - startResize.y;
 
-        //TODO это не работатет
+        //TODO это не работатет!!!
         if (keyModeShift && (Math.abs(dx) > 10 || Math.abs(dy) > 10)) {
             if (Math.abs(dx) > Math.abs(dy)) {
                 dy = Math.abs(dx) * (dy / dx);
