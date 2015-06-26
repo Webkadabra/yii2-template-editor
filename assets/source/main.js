@@ -71,9 +71,6 @@ function changeObjectColor() {
     }
 }
 
-/**
- * Загрузка
- */
 $(function () {
 
     var $buttonSave = $('#te-btn-save'),
@@ -96,7 +93,8 @@ $(function () {
 
     var $valign = $('.valign');
 
-    editor = new Editor(0);
+    editor = new Editor();
+    editor.setCanvas(document.getElementById('paper'));
 
     /**
      * Изменения на листе
@@ -156,7 +154,7 @@ $(function () {
      */
     $buttonCreate.click(function () {
         var obj = new EditorObject(editor);
-        obj.text = 'Текст';
+        obj.text = '';
         obj.width = obj.height = 150;
         obj.x = editor.canvas.width / 2 - obj.width / 2;
         obj.y = editor.canvas.height / 2 - obj.height / 2;
@@ -292,6 +290,24 @@ $(function () {
             $textArea.val($textArea.val() + $(this).val());
             $textArea.change();
         }
+    });
+
+    /**
+     * Вставка изображения
+     */
+    var isLoadElfinder = false;
+    $('#add-img').click(function () {
+        if (editor.selectedObject) {
+            var $modal = $('#modal-elfinder');
+            $modal.modal();
+            if (!isLoadElfinder) {
+                $.get($modal.data('url'), function (response) {
+                    $modal.find('.modal-body').html(response);
+                    isLoadElfinder = true;
+                });
+            }
+        }
+        return false;
     });
 
     /**
@@ -463,85 +479,18 @@ $(function () {
         }
     });
 
-
     /**
-     * Печать шаблона
+     * Загрузка объектов шаблона
      */
-    function printPaper(editors, createWin) {
-
-        if (createWin) {
-            var win = window.open();
-        } else {
-            win = window;
-        }
-
-        var css = "@page :first {margin: 0;} " +
-            "@page :left { margin: 0; } " +
-            "@page :right { margin: 0; } " +
-            "@media print and (color) { * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }} " +
-            "body {margin:0; width:100%}";
-
-        win.document.write('<head><title>NovatorPriceService</title><style>' + css + '</style></head><body>');
-
-        if (editors.length == 1) {
-            editors[0].print();
-            writeImage(win, editors[0], editors[0].canvas.width, editors[0].canvas.height);
-        } else {
-
-            var fn = new EditorFunctions(editors[0]);
-
-            var cols = parseInt(fn.fromUnit(21) / editors[0].canvas.width),
-                n = 0,
-                w = fn.toUnit(editors[0].canvas.width),
-                h = fn.toUnit(editors[0].canvas.height),
-                style = 'style="width:' + w + 'cm;height:' + h + 'cm"';
-
-            win.document.write('<table style="width:21cm"><tr>');
-
-            for (var i = 0; i < editors.length; i++) {
-                win.document.write('<td ' + style +'>');
-                renderEditor(win, editors[i]);
-                win.document.write('</td>');
-                n++;
-                if (n > cols) {
-                    n = 0;
-                    win.document.write('</td></tr><tr>');
-                }
-            }
-
-            win.document.write('</tr></table>');
-        }
-
-        win.document.write('</body>');
-
-        //win.print();
-        //win.close();
-        //win.location.reload();
-
-        //e.context.scale(1, 1);
-        //e.canvas.width = w;
-        //e.canvas.height = h;
-        //e.update();
-
-        keyModeCtrl = null;
-        keyModeShift  = null;
-    }
-
-    var fast = $('#fast-print').val() == '1';
-
     $.get(templateData.loadUrl, function (response) {
-        var serialze = new Serialize();
-        serialze.load(response.items, editor, function (result) {
-            if (result.state) {
+        var serialze = new Serialize(editor);
+        serialze.callback = function (result) {
+            if (result) {
                 $.noty.closeAll();
-                if (fast) {
-                    var printer = new EditorPrinter(result.editors, false);
-                    printer.print();
-                } else {
-                    editor.update();
-                }
+                editor.update();
             }
-        });
+        };
+        serialze.load(response);
     });
 
 });

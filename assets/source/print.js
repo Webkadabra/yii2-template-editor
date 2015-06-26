@@ -16,16 +16,17 @@ function EditorPrinter(editors, createWin) {
     }
 
     function renderEditor(win, editor) {
-        var w = editor.canvas.width,
-            h = editor.canvas.height,
-            printScale = 2;
 
-        editor.canvas.width = w * printScale;
-        editor.canvas.height = h * printScale;
-        editor.context.scale(printScale, printScale);
+        win.document.write('<canvas id="p1"></canvas>');
+
+        //var canvas = document.createElement('canvas');
+        var canvas = document.getElementById('p1');
+        canvas.width = 793;
+        canvas.height = 1111;
+        editor.setCanvas(canvas);
         editor.print();
 
-        writeImage(win, editor, w, h);
+        //writeImage(win, editor, w, h);
     }
 
     this.print = function () {
@@ -39,37 +40,30 @@ function EditorPrinter(editors, createWin) {
 
         win.document.write('<head><title>NovatorPriceService</title><style>' + css + '</style></head><body>');
 
-        if (editors.length == 1) {
-            editors[0].print();
-            writeImage(win, editors[0], editors[0].canvas.width, editors[0].canvas.height);
-        } else {
+        var n = 0,
+            cols = parseInt(editors[0].fn.fromUnit(21) / editors[0].canvas.width),
+            style = 'style="width:' + editors[0].canvas.width + 'px;height:' + editors[0].canvas.height + 'px"';
 
-            var fn = new EditorFunctions(editors[0]),
-                cols = parseInt(fn.fromUnit(21) / editors[0].canvas.width),
-                n = 0,
-                style = 'style="width:' + editors[0].canvas.width + 'px;height:' + editors[0].canvas.height + 'px"';
+        win.document.write('<table><tr>');
 
-            win.document.write('<table><tr>');
-
-            for (var i = 0; i < editors.length; i++) {
-                win.document.write('<td ' + style + '>');
-                renderEditor(win, editors[i]);
-                win.document.write('</td>');
-                n++;
-                if (n >= cols) {
-                    n = 0;
-                    win.document.write('</td></tr><tr>');
-                }
+        for (var i = 0; i < editors.length; i++) {
+            win.document.write('<td ' + style + '>');
+            renderEditor(win, editors[i]);
+            win.document.write('</td>');
+            n++;
+            if (n >= cols) {
+                n = 0;
+                win.document.write('</td></tr><tr>');
             }
-
-            win.document.write('</tr></table>');
         }
+
+        win.document.write('</tr></table>');
 
         win.document.write('</body>');
 
-        win.print();
-        win.close();
-        win.location.reload();
+        //win.print();
+        //win.close();
+        //win.location.reload();
 
         if (createWin) {
             editors[0].update();

@@ -1,7 +1,7 @@
 /**
  * Объект редактора
  */
-function Editor(index) {
+function Editor() {
 
     this.objects = new EditorGroup();
     this.selected = new EditorGroup();
@@ -10,8 +10,8 @@ function Editor(index) {
     this.history = new EditorHistory(this);
     this.fn = new EditorFunctions(this);
 
-    this.canvas = document.getElementById('paper' + index);
-    this.context = this.canvas.getContext('2d');
+    this.canvas = null;
+    this.context = null;
 
     this.showFrame = true;
     this.printMode = false;
@@ -23,6 +23,102 @@ function Editor(index) {
         startResize = null,
         lockHistory = false,
         that = this;
+
+    this.setCanvas = function (element) {
+        that.canvas = element;
+        that.context = this.canvas.getContext('2d');
+
+        that.canvas.onmousemove = function (e) {
+            var point = that.fn.windowToCanvas(e.clientX, e.clientY);
+
+            if (startDrag) {
+                drag(point);
+            } else if (startResize) {
+                resize(point);
+            } else {
+
+                var cursor = that.canvas.style.cursor,
+                    newCursor = 'default',
+                    markerID = that.markers.testPoint(point);
+
+                if (markerID === null) {
+                    that.objects.each(function () {
+                        if (this.testPoint(point)) {
+                            newCursor = 'move';
+                            return false;
+                        }
+                    });
+                } else {
+                    newCursor = that.markers.cursors[markerID];
+                }
+
+                if (newCursor != cursor) {
+                    that.canvas.style.cursor = newCursor;
+                }
+            }
+        };
+
+        that.canvas.onmouseup = function (e) {
+
+            if (startResize) {
+                startResize = null;
+                return;
+            }
+
+            var point = that.fn.windowToCanvas(e.clientX, e.clientY);
+
+            if (startDrag) {
+                var dx = point.x - startDrag.x,
+                    dy = point.y - startDrag.y;
+                startDrag = null;
+                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) return;
+            }
+
+            var priz = false;
+
+            that.objects.reverseEach(function () {
+                if (this.testPoint(point)) {
+                    priz = true;
+                    if (keyModeCtrl) {
+                        if (that.selected.remove(this)) {
+                            that.markers.update();
+                            return false;
+                        }
+                    } else {
+                        that.unselectAll();
+                    }
+                    that.selectObject(this);
+                    return false;
+                }
+            });
+
+            if (!priz && !keyModeCtrl) that.unselectAll();
+            that.onObjectChange.call(this);
+            that.draw();
+        };
+
+        that.canvas.onmousedown = function (e) {
+            if (startDrag === null) {
+                var point = that.fn.windowToCanvas(e.clientX, e.clientY);
+                var markerID = that.markers.testPoint(point);
+                if (markerID !== null) {
+                    updateOld();
+                    markerResize = markerID;
+                    startResize = point;
+                    lockHistory = false;
+                } else {
+                    that.selected.each(function () {
+                        if (this.testPoint(point)) {
+                            updateOld();
+                            startDrag = point;
+                            lockHistory = false;
+                            return false;
+                        }
+                    });
+                }
+            }
+        };
+    };
 
     /**
      * Выделить объект
@@ -170,96 +266,5 @@ function Editor(index) {
     this.update = function () {
         this.draw();
         this.onObjectChange.call(this);
-    };
-
-    this.canvas.onmousemove = function (e) {
-        var point = that.fn.windowToCanvas(e.clientX, e.clientY);
-
-        if (startDrag) {
-            drag(point);
-        } else if (startResize) {
-            resize(point);
-        } else {
-
-            var cursor = that.canvas.style.cursor,
-                newCursor = 'default',
-                markerID = that.markers.testPoint(point);
-
-            if (markerID === null) {
-                that.objects.each(function () {
-                    if (this.testPoint(point)) {
-                        newCursor = 'move';
-                        return false;
-                    }
-                });
-            } else {
-                newCursor = that.markers.cursors[markerID];
-            }
-
-            if (newCursor != cursor) {
-                that.canvas.style.cursor = newCursor;
-            }
-        }
-    };
-
-    this.canvas.onmouseup = function (e) {
-
-        if (startResize) {
-            startResize = null;
-            return;
-        }
-
-        var point = that.fn.windowToCanvas(e.clientX, e.clientY);
-
-        if (startDrag) {
-            var dx = point.x - startDrag.x,
-                dy = point.y - startDrag.y;
-            startDrag = null;
-            if (Math.abs(dx) > 5 || Math.abs(dy) > 5) return;
-        }
-
-        var priz = false;
-
-        that.objects.reverseEach(function () {
-            if (this.testPoint(point)) {
-                priz = true;
-                if (keyModeCtrl) {
-                    if (that.selected.remove(this)) {
-                        that.markers.update();
-                        return false;
-                    }
-                } else {
-                    that.unselectAll();
-                }
-                that.selectObject(this);
-                return false;
-            }
-        });
-
-        if (!priz && !keyModeCtrl) that.unselectAll();
-        that.onObjectChange.call(this);
-        that.draw();
-    };
-
-    this.canvas.onmousedown = function (e) {
-        if (startDrag === null) {
-            var point = that.fn.windowToCanvas(e.clientX, e.clientY);
-            var markerID = that.markers.testPoint(point);
-            if (markerID !== null) {
-                updateOld();
-                markerResize = markerID;
-                startResize = point;
-                lockHistory = false;
-            } else {
-                that.selected.each(function () {
-                    if (this.testPoint(point)) {
-                        updateOld();
-                        startDrag = point;
-                        lockHistory = false;
-                        return false;
-                    }
-                });
-            }
-        }
     };
 }

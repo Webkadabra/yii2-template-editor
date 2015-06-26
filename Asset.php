@@ -18,9 +18,11 @@ class Asset extends AssetBundle
 
     public function init()
     {
-        $this->sourcePath = YII_DEBUG ?
+        /*$this->sourcePath = YII_DEBUG ?
             '@app/extensions/yii2-template-editor/assets' :
-            '@vendor/mrssoft/yii2-template-editor/assets';
+            '@vendor/mrssoft/yii2-template-editor/assets';*/
+
+        $this->sourcePath = '@app/extensions/yii2-template-editor/assets';
 
         $this->js = YII_DEBUG ? [
             'noty/packaged/jquery.noty.packaged.min.js',

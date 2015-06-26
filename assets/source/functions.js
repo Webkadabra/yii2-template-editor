@@ -104,4 +104,22 @@ var EditorFunctions = function (editor) {
             editor.update();
         }
     };
+
+    /**
+     * Вставка изображения
+     * @param file
+     */
+    this.insertImage = function(file) {
+        if (editor.selected.count() == 1) {
+            var obj = editor.selected.item(0);
+            obj.image = new Image();
+            obj.image.onload = obj.image.onerror = function () {
+                obj.text = '';
+                obj.update();
+                editor.update();
+                editor.history.change([editor.selectedObject], ['text']);
+            };
+            obj.image.src = file.url;
+        }
+    }
 };

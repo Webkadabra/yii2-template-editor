@@ -7,9 +7,12 @@
  */
 
 use app\models\Template;
+use mrssoft\template\Asset;
 use yii\bootstrap\ActiveForm;
 use yii\helpers\Html;
 use yii\helpers\Url;
+
+Asset::register($this);
 
 $widget = $this->context;
 ?>
@@ -17,12 +20,12 @@ $widget = $this->context;
 <table id="template-editor-wrapper"><tr>
     <td class="left">
         <button type="button" id="te-btn-close" data-url="<?=Url::toRoute(['template/index']);?>" title="Закрыть" class="btn btn-default"><span class="flaticon-cross106"></span></button>
-        <button type="button" id="te-btn-save" class="btn btn-default" title="Сохранить"><i class="flaticon-floppy1"></i></button>
-        <button type="button" id="te-btn-print" class="btn btn-default" title="Печать шаблона..."><span class="flaticon-print26"></span></button>
+        <button type="button" id="te-btn-save" class="btn btn-success" title="Сохранить"><i class="flaticon-floppy1"></i></button>
+        <!--<button type="button" id="te-btn-print" class="btn btn-default" title="Печать шаблона..."><span class="flaticon-print26"></span></button>-->
         <button type="button" id="te-btn-config" class="btn btn-default" data-toggle="modal" data-target="#modal-config" title="Параметры шаблона..."><span class="flaticon-settings61"></span></button>
         <hr>
         <button type="button" id="te-btn-create" class="btn btn-primary" title="Новый объект"><i class="flaticon-add182"></i></button>
-        <button type="button" id="te-btn-copy" class="btn btn-success only-select only-select2" title="Создать копию объекта"><span class="flaticon-copy8"></span></button>
+        <button type="button" id="te-btn-copy" class="btn btn-default only-select only-select2" title="Создать копию объекта"><span class="flaticon-copy8"></span></button>
         <button type="button" id="te-btn-undo" class="btn btn-default" disabled title="Отмена"><span class="flaticon-return13"></span></button>
         <button type="button" id="te-btn-redo" class="btn btn-default" disabled title="Повтор"><span class="flaticon-send"></span></button>
         <button type="button" id="te-btn-delete" class="btn btn-danger only-select only-select2" title="Удалить"><span class="flaticon-delete81"></span></button>
@@ -75,7 +78,7 @@ $widget = $this->context;
                 </tr>
             </table>
             <textarea id="te-text" rows="4" class="only-select"></textarea>
-            <!--<button id="add-img" class="btn btn-default btn-xs">Вставка изображения</button>-->
+            <button id="add-img" class="btn btn-default btn-xs only-select">Вставка изображения...</button>
         </div>
         <div class="group">
             <?=Html::listBox('templates', null, $patterns, ['id' => 'te-templates', 'class' => 'only-select']);?>
@@ -116,6 +119,7 @@ $widget = $this->context;
     </td>
 </tr></table>
 
+<!-- Параметры шаблона -->
 <div class="modal" id="modal-config">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -147,7 +151,22 @@ $widget = $this->context;
         </div>
     </div>
 </div>
-<!--<div class="shadow"></div>-->
+
+<!-- Выбор изображения -->
+<div class="modal" id="modal-elfinder" data-url="<?=Url::toRoute(['template/image']);?>">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <h4 class="modal-title">Выбор изображения</h4>
+            </div>
+            <div class="modal-body" style="min-height: 450px">
+                Загрузка...
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     var templateData = {
         id: <?=$widget->model->id;?>,
