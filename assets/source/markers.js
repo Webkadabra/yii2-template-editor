@@ -83,7 +83,7 @@ function Markers(editor) {
         if (visible) {
             editor.context.fillStyle = fillStyle;
             for (var i = 0; i < 8; i++) {
-                editor.context.fillRect(markers[i].x, markers[i].y, size, size);
+                editor.context.fillRect(markers[i].x * editor.zoom, markers[i].y * editor.zoom, size, size);
             }
         }
     };

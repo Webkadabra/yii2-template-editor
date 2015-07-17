@@ -29,6 +29,9 @@ $widget = $this->context;
         <button type="button" id="te-btn-undo" class="btn btn-default" disabled title="Отмена"><span class="flaticon-return13"></span></button>
         <button type="button" id="te-btn-redo" class="btn btn-default" disabled title="Повтор"><span class="flaticon-send"></span></button>
         <button type="button" id="te-btn-delete" class="btn btn-danger only-select only-select2" title="Удалить"><span class="flaticon-delete81"></span></button>
+        <hr>
+        <button type="button" id="te-btn-margin" class="btn btn-default active" title="Направляющие"><span class="flaticon-object6"></span></button>
+        <button type="button" id="te-btn-frames" class="btn btn-default active" title="Границы объектов"><span class="flaticon-object6"></span></button>
     </td>
     <td class="center">
         <div class="middle">
@@ -97,13 +100,13 @@ $widget = $this->context;
                     <td>Толщина</td>
                     <td><input id="te-border-width" data-te-prop="lineWidth" type="number" class="only-select" value="0"></td>
                 </tr>
-<!--                <tr>
-                    <td>Масштаб <span id="zoom-value">100%</span></td>
-                    <td>
+                <tr>
+                    <td colspan="2">Масштаб <span id="zoom-value">100%</span></td>
+                    <td colspan="2">
                         <input type="range" min="0.5" max="2" step="0.01" value="1" id="zoom">
-                        <button id="zoom100" class="btn btn-default btn-xs">100%</button>
+                        <button id="zoom100" class="btn btn-default btn-xs" title="Установить масштаб 1:1">100%</button>
                     </td>
-                </tr>-->
+                </tr>
             </table>
         </div>
         <div class="group btn-toolbar">

@@ -40,8 +40,8 @@ var EditorFunctions = function (editor) {
     this.windowToCanvas = function (x, y) {
         var bbox = editor.canvas.getBoundingClientRect();
         return {
-            x: x - bbox.left * (editor.canvas.width / bbox.width),
-            y: y - bbox.top * (editor.canvas.height / bbox.height)
+            x: (x - bbox.left * (editor.canvas.width / bbox.width)) / editor.zoom,
+            y: (y - bbox.top * (editor.canvas.height / bbox.height)) / editor.zoom
         };
     };
 

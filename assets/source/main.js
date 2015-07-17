@@ -86,6 +86,8 @@ $(function () {
         $listFont = $('#te-font'),
         $btnBold = $('#te-btn-bold'),
         $btnItalic = $('#te-btn-italic'),
+        $btnShowFrames = $('#te-btn-frames'),
+        $btnShowMargin = $('#te-btn-margin'),
         $alignButtons = $('.align'),
         $btnMakeAlign = $('.m-align'),
         $uiSizeProps = $('[data-te-size-prop]'),
@@ -231,6 +233,26 @@ $(function () {
     $buttonRedo.click(editor.history.redo);
     $buttonDelete.click(editor.fn.remove);
     $buttonCopy.click(editor.fn.clone);
+
+    /**
+     * Границы объектов
+     */
+    $btnShowFrames.click(function () {
+        $(this).toggleClass('active');
+        editor.showFrame = $(this).hasClass('active');
+        editor.draw();
+        return true;
+    });
+
+    /**
+     * Направляющие
+     */
+    $btnShowMargin.click(function () {
+        $(this).toggleClass('active');
+        editor.showMargin = $(this).hasClass('active');
+        editor.draw();
+        return true;
+    });
 
     /**
      * Изменение свойства объекта
@@ -397,17 +419,37 @@ $(function () {
     $btnMakeAlign.click(editor.fn.align);
 
     /**
+     * Масштаб
+     */
+    var $rngZoom = $('#zoom');
+    function updateZoomValue() {
+        $('#zoom-value').text((parseFloat($rngZoom.val()) * 100).toFixed() + '%');
+    }
+    $rngZoom.change(function () {
+        editor.setZoom($(this).val());
+        updateZoomValue();
+    });
+    $('#zoom100').click(function () {
+        editor.setZoom(1);
+        $rngZoom.val(1);
+        updateZoomValue();
+    });
+
+    /**
      * Размеры рабочей области
      */
     var $middle = $('.middle');
     if ($middle.length) {
-        function setupLeft() {
-            var h = $(window).height() - $middle.offset().top;
+        function setupWorkArea() {
+            var h = $(window).height() - $middle.offset().top,
+                w = $(window).width() - ($('.left').width() + $('.right').width());
+
             $middle.height(h);
+            $middle.width(w);
         }
 
-        $(window).resize(setupLeft);
-        setupLeft();
+        $(window).resize(setupWorkArea);
+        setupWorkArea();
     }
 
     /**

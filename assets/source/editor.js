@@ -14,9 +14,14 @@ function Editor() {
     this.context = null;
 
     this.showFrame = true;
+    this.showMargin = true;
     this.printMode = false;
 
+    this.zoom = 1;
+
     this.onObjectChange = null;
+
+    var canvasWidth, canvasHeight;
 
     var startDrag = null,
         markerResize = null,
@@ -27,6 +32,9 @@ function Editor() {
     this.setCanvas = function (element) {
         that.canvas = element;
         that.context = this.canvas.getContext('2d');
+
+        canvasWidth = that.canvas.width;
+        canvasHeight = that.canvas.height;
 
         that.canvas.onmousemove = function (e) {
             var point = that.fn.windowToCanvas(e.clientX, e.clientY);
@@ -120,6 +128,13 @@ function Editor() {
         };
     };
 
+    this.setZoom = function(value) {
+        that.zoom = value;
+        that.canvas.width = canvasWidth * that.zoom;
+        that.canvas.height = canvasHeight * that.zoom;
+        that.draw();
+    };
+
     /**
      * Выделить объект
      * @param obj EditorObject
@@ -199,7 +214,7 @@ function Editor() {
             }
         }
 
-        var minSize = 10;
+        var minSize = 5;
         that.selected.each(function () {
             if (markerResize == 2 || markerResize == 4 || markerResize == 7) {
                 this.width = this.old.width + dx * this.old.rw;
@@ -239,11 +254,41 @@ function Editor() {
         });
     }
 
-    function render() {
+    function clear() {
         that.context.clearRect(0, 0, that.canvas.width, that.canvas.height);
+    }
+
+    function render() {
         that.objects.each(function () {
             this.draw(that.context);
         });
+    }
+
+    /**
+     * Направляющие
+     */
+    function drawGuidLines() {
+        that.context.strokeStyle = 'rgb(68, 220, 255)';
+        that.context.setLineDash([10]);
+        that.context.lineWidth = 1;
+
+        //Рамка
+        var margin = that.fn.fromUnit(0.5);
+        that.context.rect(margin, margin, that.canvas.width - margin * 2, that.canvas.height - margin * 2);
+        that.context.stroke();
+
+        var x =  that.canvas.width / 2;
+        var y =  that.canvas.height / 2;
+
+        //Вертикальная
+        that.context.moveTo(x, 0);
+        that.context.lineTo(x, that.canvas.height);
+        that.context.stroke();
+
+        //Горизонтальная
+        that.context.moveTo(0, y);
+        that.context.lineTo(that.canvas.width, y);
+        that.context.stroke();
     }
 
     this.print = function () {
@@ -256,6 +301,8 @@ function Editor() {
      * Перерисовка холста
      */
     this.draw = function () {
+        clear();
+        if (that.showMargin) drawGuidLines();
         render();
         that.markers.draw();
     };
