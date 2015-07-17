@@ -7,5 +7,5 @@ interface PatternInterface
 
     public static function getPattern();
 
-    public static function execute($data);
+    public function execute($data);
 }

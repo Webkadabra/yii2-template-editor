@@ -11,39 +11,33 @@ echo $objects;
 
 <style>
 
-    @page :first {
-        margin: 0.5cm
+    @page :first, @page :left, @page :right {
+        margin: 0;
     }
 
-    @page :left {
-        margin: 0.5cm
-    }
-
-    @page :right {
-        margin: 0.5cm
-    }
-
-    * {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+    @media print and (color) {
+        * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
     }
 
     body {
         margin: 0;
-        width: 100%
+        width: 100%;
     }
 
     img {
         margin: 0;
-        outline: none
+        outline: none;
     }
 
     table {
-        margin: 0
+        margin: 0;
     }
 
     table td {
-        padding: 0
+        padding: 0;
     }
 
     body {
@@ -54,7 +48,9 @@ echo $objects;
         position: relative;
     }
     .wrapper {
+        page-break-after: always;
         background: #fff;
+        /*margin-left: -0.5cm;*/
     }
     .wrapper td {
         position: relative;
@@ -75,11 +71,15 @@ echo $objects;
     }
     .object .text {
         display: table-cell;
+        /*        -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;*/
     }
     .object .img {
         width: 100%;
         height: auto;
     }
+
+    /*Таблица свойств*/
     .table-options {
         width: 100%;
         height: 100%;
@@ -87,7 +87,27 @@ echo $objects;
         border-collapse: collapse;
     }
     .table-options td {
-        padding: 3px;
+        width: 50%;
+        padding: 4px 10px;
         border: 1px solid #000;
     }
+
+    /*Таблица прайса*/
+    .table-price {
+        width: 100%;
+        border: 1px solid #000;
+        border-collapse: collapse;
+    }
+    .table-price td, .table-price th {
+        padding: 3px;
+        border: 1px solid #000;
+        text-align: center;
+    }
+    .table-price td:first-child {
+        text-align: left;
+    }
+    .table-price th, .table-price td:last-child, .table-price td:first-child {
+        font-weight: bold;
+    }
 </style>
+

@@ -24,7 +24,7 @@ class PatternManager extends Component
         /** @var PatternInterface $class */
         foreach ($files as $file)
         {
-            $class = $this->patternNamespace.basename($file, '.php');
+            $class = $this->patternNamespace . basename($file, '.php');
             if ((new $class) instanceof PatternInterface)
             {
                 $tag = $this->startTag . $class::getPattern() . $this->endTag;
@@ -41,13 +41,13 @@ class PatternManager extends Component
 
     public function fillData(&$objects, $data)
     {
-        /** @var \mrssoft\template\PatternInterface $class */
+        /** @var \mrssoft\template\PatternInterface $obj */
         foreach ($this->_patterns as $tag => $class)
         {
             if (strpos($objects, $tag) !== false)
             {
-                $value = $class::execute($data);
-                //$value = Json::encode($value);
+                $obj = new $class;
+                $value = $obj->execute($data);
                 $objects = str_replace($tag, $value, $objects);
             }
         }

@@ -33,6 +33,8 @@ class Editor extends Widget
 
     public $data = null;
 
+    public $callback = null;
+
     /**
      * @var array Доп. параметры передваемые при сохранении
      */
@@ -90,37 +92,72 @@ class Editor extends Widget
      */
     private function printing($patternManager)
     {
-        $result = Html::beginTag('tr');
+        $result = '';
+        $table = Html::beginTag('tr');
 
-        $cols = 1;
-        $n = 0;
+        $pageWidth = 21;
+        $pageHeight = 29.7;
+
+        $cols = intval($pageWidth / $this->model->width);
+        $rows = intval($pageHeight / $this->model->height);
+        $c = 0;
+        $r = 0;
 
         $width = $this->model->width * self::SCALE;
         $height = $this->model->height * self::SCALE;
 
-        foreach (call_user_func($this->data, $patternManager) as $item) {
+        if ($this->model->type == 'tag') { // Ценник
+            foreach (call_user_func($this->callback, $patternManager) as $item) {
 
-            $data = json_decode($item);
-            if ($data->version != '1.0.0') {
-                return;
+                $table .= $this->renderObjects($item, $width, $height);
+
+                $c++;
+                if ($c >= $cols) {
+                    $table .= Html::endTag('tr');
+                    $c = 0;
+                    $r++;
+                    if ($r >= $rows) {
+                        $result .= Html::tag('table', $table, ['class' => 'wrapper']);
+                        $table = Html::beginTag('tr');
+                        $r = 0;
+                    } else {
+                        $table .= Html::beginTag('tr');
+                    }
+                }
             }
-
-            $resultObj = '';
-            foreach ($data->objects as $object) {
-                $resultObj .= $this->renderObject($object);
-            }
-
-            $result .=  Html::tag('td', $resultObj, ['style' => 'width:' . $width . 'px;height:' . $height . 'px']);
-
-            $n++;
-            if ($n >= $cols) {
-                $result .= Html::endTag('tr').Html::beginTag('tr');
-            }
+        } else { // Прайс
+            $obj = $this->model->objects;
+            $patternManager->fillData($obj, $this->data);
+            $table .= Html::tag('tr', $this->renderObjects($obj, $width, $height));
         }
 
+        $result .= Html::tag('table', $table, ['class' => 'wrapper']);
+
         echo $this->render('print', [
-            'objects' => Html::tag('table', Html::endTag('tr') . $result, ['class' => 'wrapper'])
+            'objects' => $result
         ]);
+    }
+
+    /**
+     * Вывод всех объектов позиции
+     * @param $objects
+     * @param $width
+     * @param $height
+     * @return string
+     */
+    private function renderObjects($objects, $width, $height)
+    {
+        $data = json_decode($objects);
+        if ($data->version != '1.0.0') {
+            return '';
+        }
+
+        $resultObj = '';
+        foreach ($data->objects as $object) {
+            $resultObj .= $this->renderObject($object);
+        }
+
+        return Html::tag('td', $resultObj, ['style' => 'width:' . $width . 'px;height:' . $height . 'px']);
     }
 
     /**
